@@ -6,9 +6,10 @@ import com.kl.quizsphere.model.dto.user.UserQueryRequest;
 import com.kl.quizsphere.model.entity.User;
 import com.kl.quizsphere.model.vo.LoginUserVO;
 import com.kl.quizsphere.model.vo.UserVO;
-import java.util.List;
-import javax.servlet.http.HttpServletRequest;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 用户服务

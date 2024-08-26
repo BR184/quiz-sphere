@@ -10,10 +10,11 @@ import com.kl.quizsphere.model.entity.PostThumb;
 import com.kl.quizsphere.model.entity.User;
 import com.kl.quizsphere.service.PostService;
 import com.kl.quizsphere.service.PostThumbService;
-import javax.annotation.Resource;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
 
 /**
  * 帖子点赞服务实现

@@ -10,22 +10,11 @@ import com.kl.quizsphere.config.WxOpenConfig;
 import com.kl.quizsphere.constant.UserConstant;
 import com.kl.quizsphere.exception.BusinessException;
 import com.kl.quizsphere.exception.ThrowUtils;
-import com.kl.quizsphere.model.dto.user.UserAddRequest;
-import com.kl.quizsphere.model.dto.user.UserLoginRequest;
-import com.kl.quizsphere.model.dto.user.UserQueryRequest;
-import com.kl.quizsphere.model.dto.user.UserRegisterRequest;
-import com.kl.quizsphere.model.dto.user.UserUpdateMyRequest;
-import com.kl.quizsphere.model.dto.user.UserUpdateRequest;
+import com.kl.quizsphere.model.dto.user.*;
 import com.kl.quizsphere.model.entity.User;
 import com.kl.quizsphere.model.vo.LoginUserVO;
 import com.kl.quizsphere.model.vo.UserVO;
 import com.kl.quizsphere.service.UserService;
-
-import java.util.List;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import me.chanjar.weixin.common.bean.oauth2.WxOAuth2AccessToken;
@@ -33,12 +22,12 @@ import me.chanjar.weixin.mp.api.WxMpService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 import static com.kl.quizsphere.service.impl.UserServiceImpl.SALT;
 

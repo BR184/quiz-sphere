@@ -1,7 +1,7 @@
 package com.kl.quizsphere.service;
 
-import com.kl.quizsphere.model.entity.PostThumb;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.kl.quizsphere.model.entity.PostThumb;
 import com.kl.quizsphere.model.entity.User;
 
 /**
