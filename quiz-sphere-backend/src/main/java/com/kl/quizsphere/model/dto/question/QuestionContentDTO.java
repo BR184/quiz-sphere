@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * @author KL
+ * @author <a href="https://github.com/BR184">BR184</a>
  * @version 1.0
  * @since 2024-08-26 05:08:16
  */
@@ -32,7 +32,7 @@ public class QuestionContentDTO {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    private static class Option {
+    public static class Option {
         private String result;
         private int score;
         private String value;

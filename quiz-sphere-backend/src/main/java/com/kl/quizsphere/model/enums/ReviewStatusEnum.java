@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 /**
  * App 应用类型枚举
  *
- * @author KL
+ * @author <a href="https://github.com/BR184">BR184</a>
  * @version 1.0
  * @since 2024-08-26 04:19:06
  */

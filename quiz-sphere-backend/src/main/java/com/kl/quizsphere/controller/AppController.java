@@ -2,10 +2,7 @@ package com.kl.quizsphere.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kl.quizsphere.annotation.AuthCheck;
-import com.kl.quizsphere.common.BaseResponse;
-import com.kl.quizsphere.common.DeleteRequest;
-import com.kl.quizsphere.common.ErrorCode;
-import com.kl.quizsphere.common.ResultUtils;
+import com.kl.quizsphere.common.*;
 import com.kl.quizsphere.constant.UserConstant;
 import com.kl.quizsphere.exception.BusinessException;
 import com.kl.quizsphere.exception.ThrowUtils;
@@ -25,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
+import java.util.Objects;
 
 /**
  * 应用接口
@@ -240,4 +239,36 @@ public class AppController {
     }
 
     // endregion
+
+    /**
+     * 审核应用
+     * @param reviewRequest
+     * @param request
+     * @return
+     */
+
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> reviewApp(@RequestBody ReviewRequest reviewRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(reviewRequest == null, ErrorCode.PARAMS_ERROR);
+        Long appId = reviewRequest.getId();
+        Integer reviewStatus = reviewRequest.getReviewStatus();
+        //校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "AppId不合法");
+        ReviewStatusEnum enumsByValue = ReviewStatusEnum.getEnumsByValue(reviewStatus);
+        ThrowUtils.throwIf( reviewStatus == null,ErrorCode.PARAMS_ERROR, "id或审核状态不能为空");
+        //判断重复操作
+        App oldApp = appService.getById(appId);
+        ThrowUtils.throwIf(oldApp == null, ErrorCode.NOT_FOUND_ERROR,"App不存在");
+        ThrowUtils.throwIf(Objects.equals(oldApp.getReviewStatus(), reviewStatus), ErrorCode.PARAMS_ERROR, "重复操作");
+        //更新APP
+        App app = new App();
+        app.setReviewerId(userService.getLoginUser(request).getId());
+        app.setReviewStatus(reviewStatus);
+        app.setReviewMessage(reviewRequest.getReviewMessage());
+        app.setReviewTime(new Date());
+        boolean result = appService.updateById(app);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "审核失败");
+        return ResultUtils.success(true);
+    }
 }
