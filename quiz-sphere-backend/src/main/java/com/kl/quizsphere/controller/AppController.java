@@ -172,6 +172,8 @@ public class AppController {
         long size = appQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 限制审核状态
+        appQueryRequest.setReviewStatus(ReviewStatusEnum.APPROVED.getValue());
         // 查询数据库
         Page<App> appPage = appService.page(new Page<>(current, size),
                 appService.getQueryWrapper(appQueryRequest));
@@ -263,6 +265,7 @@ public class AppController {
         ThrowUtils.throwIf(Objects.equals(oldApp.getReviewStatus(), reviewStatus), ErrorCode.PARAMS_ERROR, "重复操作");
         //更新APP
         App app = new App();
+        app.setId(appId);
         app.setReviewerId(userService.getLoginUser(request).getId());
         app.setReviewStatus(reviewStatus);
         app.setReviewMessage(reviewRequest.getReviewMessage());

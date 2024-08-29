@@ -14,6 +14,7 @@ import com.kl.quizsphere.model.entity.App;
 import com.kl.quizsphere.model.entity.User;
 import com.kl.quizsphere.model.entity.UserAnswer;
 import com.kl.quizsphere.model.enums.AppScoringStrategyEnum;
+import com.kl.quizsphere.model.enums.ReviewStatusEnum;
 import com.kl.quizsphere.model.vo.UserAnswerVO;
 import com.kl.quizsphere.model.vo.UserVO;
 import com.kl.quizsphere.service.AppService;
@@ -68,15 +69,8 @@ public class UserAnswerServiceImpl extends ServiceImpl<UserAnswerMapper, UserAns
         // 创建数据时，参数不能为空
         if (add) {
             // 补充校验规则
-            ThrowUtils.throwIf(StringUtils.isBlank(resultName), ErrorCode.PARAMS_ERROR,"标题不能为空");
-            ThrowUtils.throwIf(scoringStrategy==null, ErrorCode.PARAMS_ERROR, "题目所属应用不存在");
             ThrowUtils.throwIf(appId==null, ErrorCode.PARAMS_ERROR, "题目所属应用不能为空");
-            ThrowUtils.throwIf(appType==null, ErrorCode.PARAMS_ERROR, "题目所属应用类型不能为空");
-            ThrowUtils.throwIf(userId==null, ErrorCode.PARAMS_ERROR, "题目所属用户不能为空");
             ThrowUtils.throwIf(StringUtils.isBlank(choices), ErrorCode.PARAMS_ERROR, "题目选项不能为空");
-            ThrowUtils.throwIf(resultId==null, ErrorCode.PARAMS_ERROR, "题目结果不能为空");
-            ThrowUtils.throwIf(resultScore==null, ErrorCode.PARAMS_ERROR, "题目结果分数不能为空");
-            ThrowUtils.throwIf(StringUtils.isBlank(resultDesc), ErrorCode.PARAMS_ERROR,"题目描述不能为空");
         }
         // 修改数据时，有参数则校验
         // 补充校验规则
@@ -85,24 +79,16 @@ public class UserAnswerServiceImpl extends ServiceImpl<UserAnswerMapper, UserAns
         }
         if (scoringStrategy!= null) {
         AppScoringStrategyEnum appScoringStrategyEnum = AppScoringStrategyEnum.getEnumsByValue(scoringStrategy);
-            if (appScoringStrategyEnum== null)
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "题目所属应用不存在");
+            if (appScoringStrategyEnum == null)
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "评分策略不存在");
         }
-
-        if (appId != null) {
-            App app = appService.getById(appId);
-            ThrowUtils.throwIf(app == null, ErrorCode.PARAMS_ERROR, "题目所属应用不存在");
-        }else {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "题目所属应用不能为空");
+        if (appType!= null) {
+            AppScoringStrategyEnum appScoringStrategyEnum = AppScoringStrategyEnum.getEnumsByValue(scoringStrategy);
+            if (appScoringStrategyEnum == null)
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "题目所属类型不存在");
         }
-        if (userId != null) {
-            User user = userService.getById(appId);
-            ThrowUtils.throwIf(user == null, ErrorCode.PARAMS_ERROR, "题目所属应用不存在");
-        }else {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "题目所属用户不能为空");
-        }
-        ThrowUtils.throwIf(resultDesc.length()>256, ErrorCode.PARAMS_ERROR, "题目描述过长");
-        ThrowUtils.throwIf(resultName.length()>128, ErrorCode.PARAMS_ERROR, "题目名称不能大于128");
+        ThrowUtils.throwIf(resultDesc!=null && resultDesc.length()>256, ErrorCode.PARAMS_ERROR, "题目描述过长");
+        ThrowUtils.throwIf(resultName!=null && resultName.length()>128, ErrorCode.PARAMS_ERROR, "题目名称不能大于128");
     }
 
     /**

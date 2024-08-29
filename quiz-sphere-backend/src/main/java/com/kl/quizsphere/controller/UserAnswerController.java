@@ -14,9 +14,13 @@ import com.kl.quizsphere.model.dto.useranswer.UserAnswerAddRequest;
 import com.kl.quizsphere.model.dto.useranswer.UserAnswerEditRequest;
 import com.kl.quizsphere.model.dto.useranswer.UserAnswerQueryRequest;
 import com.kl.quizsphere.model.dto.useranswer.UserAnswerUpdateRequest;
+import com.kl.quizsphere.model.entity.App;
 import com.kl.quizsphere.model.entity.User;
 import com.kl.quizsphere.model.entity.UserAnswer;
+import com.kl.quizsphere.model.enums.ReviewStatusEnum;
 import com.kl.quizsphere.model.vo.UserAnswerVO;
+import com.kl.quizsphere.scoring.ScoringStrategyExecutor;
+import com.kl.quizsphere.service.AppService;
 import com.kl.quizsphere.service.UserAnswerService;
 import com.kl.quizsphere.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +47,12 @@ public class UserAnswerController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private ScoringStrategyExecutor scoringStrategyExecutor;
+
+    @Resource
+    private AppService appService;
+
     // region 增删改查
 
     /**
@@ -61,6 +71,8 @@ public class UserAnswerController {
         userAnswer.setChoices(JSONUtil.toJsonStr(userAnswerAddRequest.getChoices()));
         // 数据校验
         userAnswerService.validUserAnswer(userAnswer, true);
+        App appId = appService.getById(userAnswerAddRequest.getAppId());
+        ThrowUtils.throwIf(appId.getReviewStatus().equals(ReviewStatusEnum.APPROVED.getValue()), ErrorCode.OPERATION_ERROR, "题目所属应用未通过审核");
         // 填充默认值
         User loginUser = userService.getLoginUser(request);
         userAnswer.setUserId(loginUser.getId());
@@ -69,6 +81,11 @@ public class UserAnswerController {
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         // 返回新写入的数据 id
         long newUserAnswerId = userAnswer.getId();
+        // 调用评分模块
+        UserAnswer userAnswerWithResult = null;
+        userAnswerWithResult = scoringStrategyExecutor.doScore(userAnswerAddRequest.getChoices(), appService.getById(userAnswerAddRequest.getAppId()));
+        userAnswerWithResult.setId(newUserAnswerId);
+        userAnswerService.updateById(userAnswerWithResult);
         return ResultUtils.success(newUserAnswerId);
     }
 

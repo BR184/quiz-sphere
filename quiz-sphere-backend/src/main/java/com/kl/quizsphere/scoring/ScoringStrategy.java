@@ -14,7 +14,8 @@ import java.util.List;
  */
 public interface ScoringStrategy {
     /**
-     * 执行评分
+     * 执行评分策略接口
+     * 交给Spring管理注入执行器
      * @param choices
      * @param app
      * @return

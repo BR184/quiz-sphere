@@ -16,6 +16,7 @@ import com.kl.quizsphere.service.ScoringResultService;
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 自定义-测评类-应用打分策略
@@ -24,6 +25,7 @@ import java.util.List;
  * @version 1.0
  * @since 2024-08-27 15:53:07
  */
+@ScoringStrategyConfig(appType = 1, scoringStrategy = 0)
 public class UserTestScoringStrategyImpl implements ScoringStrategy {
 
     @Resource
@@ -50,6 +52,9 @@ public class UserTestScoringStrategyImpl implements ScoringStrategy {
         //遍历所有的题目
         for (int i = 0; i < questionContent.size(); i++) {
             QuestionContentDTO questionContentDTO = questionContent.get(i);
+            if (choices.size() == i) {
+                break;
+            }
             String userChoice = choices.get(i);//1.A 2.B 3.B 4.A 5.A 6.B .......
             //遍历题目的选项
             for (QuestionContentDTO.Option option : questionContentDTO.getOptions()) {
@@ -70,8 +75,8 @@ public class UserTestScoringStrategyImpl implements ScoringStrategy {
             List<String> list = JSONUtil.toList(scoringResult.getResultProp(), String.class);//I N T J
             int score = list.stream().mapToInt(s -> testResultCount.getOrDefault(s, 0)).sum();//I:10,N:5,T:3,J:6 --sum--> 24 Point
             //找到最高分答案（即为最匹配的答案）
-            if (score>maxScore){
-                maxScore=score;
+            if (score > maxScore) {
+                maxScore = score;
                 maxScoringResult = scoringResult;
             }
         }
