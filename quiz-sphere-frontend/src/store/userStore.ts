@@ -6,7 +6,7 @@ import ACCESS_ENUM from "@/access/accessEnum";
 /*
  * 用户登录信息
  */
-export const userLoginUserStore = defineStore("loginUser", () => {
+export const useLoginUserStore = defineStore("loginUser", () => {
   const loginUser = ref<API.LoginUserVO>({
     userName: "未登录",
   });

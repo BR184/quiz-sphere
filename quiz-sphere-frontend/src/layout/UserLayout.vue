@@ -4,7 +4,11 @@
       <a-layout-header class="header">
         <a-space>
           <img class="logo" src="@/assets/logo.png" alt="logo" />
-          <a-space direction="vertical" align="center">
+          <a-space
+            style="margin-right: 40px"
+            direction="vertical"
+            align="center"
+          >
             <div class="title-main">测试鸭-AI打分中心</div>
             <div class="title-sub">QuziSphere With AI GPT</div>
           </a-space>
@@ -67,12 +71,14 @@
   color: #1c222f;
   font-weight: bold;
   font-size: 30px;
+  white-space: nowrap;
   text-align: center;
 }
 
 #user-layout .title-sub {
   color: #a1a5b0;
   font-size: 18px;
+  white-space: nowrap;
   text-align: center;
 }
 </style>

@@ -3,6 +3,8 @@ import HomeView from "@/views/HomeView.vue";
 import UserLayout from "@/layout/UserLayout.vue";
 import ACCESS_ENUM from "@/access/accessEnum";
 import NoAuthPage from "@/views/NoAuthPage.vue";
+import userRegisterView from "@/views/userRegisterView.vue";
+import UserLoginView from "@/views/userLoginView.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
@@ -34,12 +36,12 @@ export const routes: Array<RouteRecordRaw> = [
       {
         path: "/user/register",
         name: "用户注册",
-        component: HomeView,
+        component: userRegisterView,
       },
       {
         path: "/user/login",
         name: "用户登录",
-        component: HomeView,
+        component: UserLoginView,
       },
     ],
     meta: {

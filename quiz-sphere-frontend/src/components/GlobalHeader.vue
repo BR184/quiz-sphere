@@ -41,10 +41,10 @@
 import { routes } from "@/router/routes";
 import { useRouter } from "vue-router";
 import { computed, ref } from "vue";
-import { userLoginUserStore } from "@/store/userStore";
+import { useLoginUserStore } from "@/store/userStore";
 import CheckAccess from "@/access/checkAccess";
 
-let loginUserStore = userLoginUserStore();
+let loginUserStore = useLoginUserStore();
 
 const router = useRouter();
 //当前选择的菜单项
@@ -56,6 +56,7 @@ router.afterEach((to, from, failure) => {
 const doMenuItemClick = (key: string) => {
   router.push(key);
 };
+
 //过滤菜单栏路由
 const visibleRoutes = computed(() => {
   return routes.filter((item) => {

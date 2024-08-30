@@ -1,11 +1,11 @@
 import router from "@/router";
-import { userLoginUserStore } from "@/store/userStore";
+import { useLoginUserStore } from "@/store/userStore";
 import ACCESS_ENUM from "@/access/accessEnum";
 import checkAccess from "@/access/checkAccess";
 //进入页面前进行全局校验
 router.beforeEach(async (to, from, next) => {
   //获取当前登录用户
-  const loginUserStore = userLoginUserStore();
+  const loginUserStore = useLoginUserStore();
   let loginUser = loginUserStore.loginUser;
   //如果之前没有尝试过获取用户信息，则自动登录
   if (!loginUser || !loginUser.userRole) {
