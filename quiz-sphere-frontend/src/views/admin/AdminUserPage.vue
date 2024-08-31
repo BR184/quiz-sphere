@@ -14,6 +14,9 @@
             size="large"
             v-model="formSearchParams.userAccount"
             placeholder="搜索用户账号"
+            :allow-clear="true"
+            @blur="doSearch"
+            @clear="doSearch"
           />
         </a-form-item>
         <a-form-item field="userName" label="用户昵称">
@@ -21,6 +24,9 @@
             size="large"
             v-model="formSearchParams.userName"
             placeholder="搜索用户昵称"
+            :allow-clear="true"
+            @blur="doSearch"
+            @clear="doSearch"
           />
         </a-form-item>
         <a-form-item field="userName" label="用户简介">
@@ -28,6 +34,9 @@
             size="large"
             v-model="formSearchParams.userProfile"
             placeholder="搜索用户简介"
+            :allow-clear="true"
+            @blur="doSearch"
+            @clear="doSearch"
           />
         </a-form-item>
         <a-form-item>
@@ -54,7 +63,7 @@
       <template #createTime="{ record }">
         <a-date-picker
           :default-value="formatDate(record.createTime)"
-          style="width: 200px"
+          style="width: 180px"
           :readonly="true"
           format="YYYY-MM-DD HH:mm:ss"
           :suffix-icon="false"
@@ -63,7 +72,7 @@
       <template #updateTime="{ record }">
         <a-date-picker
           :default-value="formatDate(record.updateTime)"
-          style="width: 200px"
+          style="width: 180px"
           :readonly="true"
           format="YYYY-MM-DD HH:mm:ss"
           :suffix-icon="false"
@@ -207,10 +216,6 @@ const columns = [
     title: "更新时间",
     dataIndex: "updateTime",
     slotName: "updateTime",
-  },
-  {
-    title: "是否删除",
-    dataIndex: "isDelete",
   },
   {
     title: "操作",
