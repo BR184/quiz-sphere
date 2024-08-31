@@ -72,13 +72,13 @@ const handleSubmit = async () => {
   const res = await userLoginUsingPost(form);
   if (res.data.code === 0) {
     await loginUserStore.fetchLoginUser();
-    message.success("注册成功");
+    message.success("登陆成功");
     await router.push({
-      path: "/user/login",
+      path: "/",
       replace: true,
     });
   } else {
-    message.error("注册失败！" + res.data.message);
+    message.error("登录失败！" + res.data.message);
   }
 };
 </script>

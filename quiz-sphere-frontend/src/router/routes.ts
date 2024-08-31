@@ -3,8 +3,9 @@ import HomeView from "@/views/HomeView.vue";
 import UserLayout from "@/layout/UserLayout.vue";
 import ACCESS_ENUM from "@/access/accessEnum";
 import NoAuthPage from "@/views/NoAuthPage.vue";
-import userRegisterView from "@/views/userRegisterView.vue";
-import UserLoginView from "@/views/userLoginView.vue";
+import userRegisterView from "@/views/user/userRegisterView.vue";
+import UserLoginView from "@/views/user/userLoginView.vue";
+import AdminUserPage from "@/views/admin/AdminUserPage.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
@@ -21,9 +22,9 @@ export const routes: Array<RouteRecordRaw> = [
     },
   },
   {
-    path: "/admin",
-    name: "管理页面",
-    component: HomeView,
+    path: "/admin/user",
+    name: "用户管理",
+    component: AdminUserPage,
     meta: {
       access: ACCESS_ENUM.ADMIN,
     },
