@@ -226,6 +226,6 @@ const columns = [
 </script>
 
 <style scoped>
-#home {
+#home-container {
 }
 </style>

@@ -85,13 +85,13 @@ const handleSubmit = async () => {
   const res = await userRegisterUsingPost(form);
   if (res.data.code === 0) {
     await loginUserStore.fetchLoginUser();
-    message.success("登录成功");
+    message.success("注册成功");
     await router.push({
       path: "/",
       replace: true,
     });
   } else {
-    message.error("登录失败！" + res.data.message);
+    message.error("注册成功！" + res.data.message);
   }
 };
 </script>
@@ -99,15 +99,16 @@ const handleSubmit = async () => {
 <style scoped>
 .user-register-page {
   margin-top: 50px;
-  padding: 80px 80px 150px;
+  padding: 80px 80px 60px;
   background-color: white;
   border: 5px solid #f1f1f1;
   border-radius: 50px;
+
   transition: all 0.3s ease-out;
 }
 
 .user-register-page:hover {
-  padding: 80px 100px 170px 100px;
+  padding: 80px 100px 80px 100px;
   border-top: 5px solid #c5c5c5;
   border-right: 10px solid #c5c5c5;
   border-bottom: 20px solid #c5c5c5;

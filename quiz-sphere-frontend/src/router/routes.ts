@@ -3,19 +3,55 @@ import HomeView from "@/views/HomeView.vue";
 import UserLayout from "@/layout/UserLayout.vue";
 import ACCESS_ENUM from "@/access/accessEnum";
 import NoAuthPage from "@/views/NoAuthPage.vue";
-import userRegisterView from "@/views/user/userRegisterView.vue";
-import UserLoginView from "@/views/user/userLoginView.vue";
+import userRegisterView from "@/views/user/UserRegisterView.vue";
+import UserLoginView from "@/views/user/UserLoginView.vue";
 import AdminUserPage from "@/views/admin/AdminUserPage.vue";
 import AdminQuestionPage from "@/views/admin/AdminQuestionPage.vue";
 import AdminAppPage from "@/views/admin/AdminAppPage.vue";
 import AdminScoringResultPage from "@/views/admin/AdminScoringResultPage.vue";
 import AdminUserAnswerPage from "@/views/admin/AdminUserAnswerPage.vue";
+import AppDetailView from "@/views/app/AppDetailView.vue";
+import AddAppView from "@/views/add/AddAppView.vue";
+import AddQuestionView from "@/views/add/AddQuestionView.vue";
+import AddScoringResultView from "@/views/add/AddScoringResultView.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "主页",
     component: HomeView,
+  },
+  {
+    path: "/add/app",
+    name: "创建应用",
+    component: AddAppView,
+  },
+  {
+    path: "/add/question/:addId",
+    name: "创建题目",
+    component: AddQuestionView,
+    props: true,
+    meta: {
+      hideInMenu: true,
+    },
+  },
+  {
+    path: "/add/scoring_result/:addId",
+    name: "创建评分",
+    component: AddScoringResultView,
+    props: true,
+    meta: {
+      hideInMenu: true,
+    },
+  },
+  {
+    path: "/app/detail/:id",
+    name: "应用详情页",
+    props: true,
+    component: AppDetailView,
+    meta: {
+      hideInMenu: true,
+    },
   },
   {
     path: "/noAuth",
