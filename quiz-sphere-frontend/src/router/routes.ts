@@ -27,7 +27,16 @@ export const routes: Array<RouteRecordRaw> = [
     component: AddAppView,
   },
   {
-    path: "/add/question/:addId",
+    path: "/add/app/:appId",
+    name: "修改应用",
+    props: true,
+    component: AddAppView,
+    meta: {
+      hideInMenu: true,
+    },
+  },
+  {
+    path: "/add/question/:appId",
     name: "创建题目",
     component: AddQuestionView,
     props: true,
@@ -36,7 +45,7 @@ export const routes: Array<RouteRecordRaw> = [
     },
   },
   {
-    path: "/add/scoring_result/:addId",
+    path: "/add/scoring_result/:appId",
     name: "创建评分",
     component: AddScoringResultView,
     props: true,

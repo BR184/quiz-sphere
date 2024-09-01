@@ -65,6 +65,27 @@
           <a-space>
             <a-button type="primary">开始答题</a-button>
             <a-button>分享应用</a-button>
+            <a-button
+              type="dashed"
+              status="warning"
+              v-if="isAuthor"
+              :href="`/add/question/${id}`"
+              >设置题目
+            </a-button>
+            <a-button
+              type="dashed"
+              status="warning"
+              v-if="isAuthor"
+              :href="`/add/scoring_result/${id}`"
+              >设置评分
+            </a-button>
+            <a-button
+              type="dashed"
+              status="warning"
+              v-if="isAuthor"
+              :href="`/add/app/${id}`"
+              >修改应用
+            </a-button>
           </a-space>
         </a-col>
         <a-col flex="400px">
@@ -76,15 +97,25 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, watchEffect, withDefaults } from "vue";
+import { computed, defineProps, ref, watchEffect, withDefaults } from "vue";
 import message from "@arco-design/web-vue/es/message";
 import { getAppVoByIdUsingGet } from "@/api/appController";
 import { useRouter } from "vue-router";
 import ACCESS_ENUM from "@/access/accessEnum";
 import { dayjs } from "@arco-design/web-vue/es/_utils/date";
+import { useLoginUserStore } from "@/store/userStore";
 
 // eslint-disable-next-line no-undef
 const data = ref<API.AppVO>({});
+
+//获取登录用户
+const loginUserStore = useLoginUserStore();
+let loginUserId = loginUserStore.loginUser?.id;
+//是否为本人
+
+const isAuthor = computed(() => {
+  return loginUserId && loginUserId === data.value.userId;
+});
 
 const router = useRouter();
 
@@ -97,7 +128,7 @@ interface Props {
  */
 const props = withDefaults(defineProps<Props>(), {
   id: () => {
-    return 0;
+    return "";
   },
 });
 

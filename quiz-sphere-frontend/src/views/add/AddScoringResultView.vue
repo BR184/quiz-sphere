@@ -93,7 +93,7 @@ const handleSubmit = async () => {
   transition: all 0.3s ease-out;
 }
 
-.user-login-page:hover {
+.app-created-page:hover {
   padding: 80px 100px 170px 100px;
   border-top: 5px solid #c5c5c5;
   border-right: 10px solid #c5c5c5;

@@ -1,7 +1,9 @@
 <template>
   <div id="app">
-    <template v-if="route.path.startsWith('/user')">
-      <router-view />
+    <template
+      v-if="route.path.startsWith('/user') || route.path.startsWith('/add')"
+    >
+      <user-layout />
     </template>
     <template v-else>
       <basic-layout />
@@ -14,6 +16,7 @@ import BasicLayout from "@/layout/BasicLayout.vue";
 import { useRoute } from "vue-router";
 import "@/access";
 import { onMounted } from "vue";
+import UserLayout from "@/layout/UserLayout.vue";
 
 const route = useRoute();
 
