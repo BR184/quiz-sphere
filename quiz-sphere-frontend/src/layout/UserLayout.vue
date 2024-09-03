@@ -2,7 +2,7 @@
   <div id="user-layout">
     <a-layout style="height: 100vh">
       <a-layout-header class="header">
-        <a-space>
+        <a-space class="header-inner" @click="doIndexClick()">
           <img class="logo" src="@/assets/logo.png" alt="logo" />
           <a-space
             style="margin-right: 40px"
@@ -26,7 +26,14 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const doIndexClick = () => {
+  router.push("/");
+};
+</script>
 
 <style scoped>
 #user-layout {
@@ -42,13 +49,29 @@
 }
 
 #user-layout .content {
-  margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
   padding: 20px;
+  background-color: #f4f5f6;
 }
 
 #user-layout .header {
   margin-top: 40px;
   font-size: 50px;
+}
+
+#user-layout .header-inner {
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  user-select: none;
+}
+
+#user-layout .header-inner:hover {
+  background-color: #f1f1f1;
+  box-shadow: 0 0 12px #c5c5c5;
 }
 
 #user-layout .footer {

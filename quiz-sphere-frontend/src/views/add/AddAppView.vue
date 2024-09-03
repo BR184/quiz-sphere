@@ -16,21 +16,29 @@
           size="medium"
           v-model="form.appName"
           placeholder="请输入应用名称"
+          max-length="30"
+          :show-word-limit="true"
         />
       </a-form-item>
       <a-form-item field="appDesc" label="应用描述">
-        <a-input
+        <a-textarea
+          max-length="1024"
+          :show-word-limit="true"
           size="medium"
           v-model="form.appDesc"
           placeholder="请输入应用描述"
         />
       </a-form-item>
       <a-form-item field="appIcon" label="应用图标">
-        <PictureUploader
-          :value="form.appIcon"
-          :onChange="(value) => (form.appIcon = value)"
-          biz="app_icon"
-        />
+        <a-space class="icon-uploader-container">
+          <PictureUploader
+            class="icon-uploader"
+            :value="form.appIcon"
+            :key="form.appIcon"
+            :onChange="(value) => (form.appIcon = value)"
+            biz="app_icon"
+          />
+        </a-space>
       </a-form-item>
       <a-form-item field="appType" label="应用类型">
         <a-select
@@ -72,16 +80,56 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from "vue";
+import { ref, watchEffect } from "vue";
 import message from "@arco-design/web-vue/es/message";
 import { useRouter } from "vue-router";
 import { APP_SCORING_STRATEGY_MAP, APP_TYPE_MAP } from "@/constant/app";
-import { addAppUsingPost } from "@/api/appController";
+import {
+  addAppUsingPost,
+  editAppUsingPost,
+  getAppVoByIdUsingGet,
+} from "@/api/appController";
 import PictureUploader from "@/components/PictureUploader.vue";
+import { withDefaults, defineProps } from "vue";
 
 const router = useRouter();
 
-const form = reactive({
+interface Props {
+  id: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  id: () => {
+    return "";
+  },
+});
+
+// eslint-disable-next-line no-undef
+const oldApp = ref<API.AppVO>();
+
+/**
+ * 加载数据
+ */
+const loadData = async () => {
+  if (!props.id) {
+    return;
+  }
+  const res = await getAppVoByIdUsingGet({
+    id: props.id,
+  });
+  if (res.data.code === 0 && res.data.data) {
+    oldApp.value = res.data.data;
+    form.value = res.data.data;
+  } else {
+    message.error("获取信息失败！" + res.data.msg);
+  }
+};
+//获取旧数据
+watchEffect(() => {
+  loadData();
+});
+
+const form = ref({
   appDesc: "",
   appIcon: "",
   appName: "",
@@ -91,22 +139,32 @@ const form = reactive({
 } as API.AppAddRequest);
 
 const handleSubmit = async () => {
-  const res = await addAppUsingPost(form);
+  let res;
+  //如果是修改APP
+  if (props.id) {
+    res = await editAppUsingPost({
+      id: props.id,
+      ...form.value,
+    });
+  } else {
+    //如果是创建APP
+    res = await addAppUsingPost(form.value);
+  }
   if (res.data.code === 0) {
-    message.success("创建成功，即将跳转到应用详情页");
+    message.success("提交成功，即将跳转到应用详情页");
     setTimeout(() => {
-      router.push(`/app/detail/${res.data.data}`);
+      router.push(`/app/detail/${props.id ?? res.data.data}`);
     }, 3000);
   } else {
-    message.error("创建失败！" + res.data.message);
+    message.error("提交失败！" + res.data.message);
   }
 };
 </script>
 
 <style scoped>
 .app-created-page {
-  margin-top: 50px;
-  padding: 80px 80px 150px;
+  margin-top: 20px;
+  padding: 20px 100px 50px;
   background-color: #fff;
   border-radius: 50px;
   transition: all 0.3s ease-out;
@@ -117,5 +175,11 @@ const handleSubmit = async () => {
 }
 
 .app-created-form {
+}
+
+.icon-uploader-container {
+  margin-bottom: 20px;
+  transform: scale(1.5);
+  transform-origin: left;
 }
 </style>

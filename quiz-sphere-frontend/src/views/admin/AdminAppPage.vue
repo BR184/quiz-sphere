@@ -113,7 +113,6 @@ import {
 } from "@/api/appController";
 import API from "@/api";
 import message from "@arco-design/web-vue/es/message";
-import { dayjs } from "@arco-design/web-vue/es/_utils/date";
 import {
   APP_SCORING_STRATEGY_MAP,
   APP_TYPE_MAP,

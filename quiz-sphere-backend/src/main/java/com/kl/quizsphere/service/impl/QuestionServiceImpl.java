@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kl.quizsphere.common.ErrorCode;
 import com.kl.quizsphere.constant.CommonConstant;
-import com.kl.quizsphere.exception.BusinessException;
 import com.kl.quizsphere.exception.ThrowUtils;
 import com.kl.quizsphere.mapper.QuestionMapper;
 import com.kl.quizsphere.model.dto.question.QuestionQueryRequest;
@@ -46,6 +45,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
 
     @Resource
     private AppService appService;
+
+    final long ONE_M = 1024 * 1024L;
+
     /**
      * 校验数据
      *
@@ -58,25 +60,22 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         // 从对象中取值
         String questionContent = question.getQuestionContent();
         Long appId = question.getAppId();
-        Long userId = question.getUserId();
 
 
         // 创建数据时，参数不能为空
         if (add) {
             // todo 补充校验规则
             ThrowUtils.throwIf(StringUtils.isBlank(questionContent), ErrorCode.PARAMS_ERROR, "题目内容不能为空");
-            ThrowUtils.throwIf(appId==null || appId<=0, ErrorCode.PARAMS_ERROR,"参数非法");
+            ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "参数非法");
         }
         // 修改数据时，有参数则校验
         // todo 补充校验规则
         if (StringUtils.isNotBlank(questionContent)) {
-            ThrowUtils.throwIf(questionContent.length() > 128, ErrorCode.PARAMS_ERROR, "题目过长");
+            ThrowUtils.throwIf(questionContent.length() > ONE_M, ErrorCode.PARAMS_ERROR, "题目内容过多！");
         }
         if (appId != null) {
             App app = appService.getById(appId);
             ThrowUtils.throwIf(app == null, ErrorCode.PARAMS_ERROR, "题目所属应用不存在");
-        }else {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "题目所属应用不能为空");
         }
     }
 

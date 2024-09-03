@@ -8,7 +8,7 @@
           </a-typography-title>
           <hr style="width: 500px; margin-left: 0; border: 1px solid #d7d7d7" />
           <a-typography-title :heading="6" class="app-desc-container">
-            {{ "\xa0\xa0\xa0\xa0\xa0\xa0" }}
+            <!--{{ "\xa0\xa0\xa0\xa0\xa0\xa0" }}-->
             {{ data.appDesc }}
           </a-typography-title>
           <a-typography-paragraph class="app-author-wrapper">
@@ -16,7 +16,7 @@
             <a-tag
               class="app-author-container"
               :color="
-                data.user?.userRole == ACCESS_ENUM.USER ? 'grey' : '#ff5722'
+                data.user?.userRole == ACCESS_ENUM.USER ? '#d7d7d7' : '#ff5722'
               "
               size="large"
               checkable
@@ -32,7 +32,7 @@
                 :style="{
                   color:
                     data.user?.userRole == ACCESS_ENUM.USER
-                      ? '#2c354b'
+                      ? '#1c222f'
                       : '#ffffff',
                 }"
                 >{{
@@ -89,7 +89,7 @@
           </a-space>
         </a-col>
         <a-col flex="400px">
-          <a-image width="100%" :src="data.appIcon" />
+          <a-image width="100%" style="margin-top: 50px" :src="data.appIcon" />
         </a-col>
       </a-row>
     </a-card>

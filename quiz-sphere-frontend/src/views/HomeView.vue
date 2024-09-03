@@ -33,9 +33,8 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watchEffect } from "vue";
+import { ref, watchEffect } from "vue";
 import AppCard from "@/components/AppCard.vue";
-import { listUserByPageUsingPost } from "@/api/userController";
 import message from "@arco-design/web-vue/es/message";
 import { listAppVoByPageUsingPost } from "@/api/appController";
 
