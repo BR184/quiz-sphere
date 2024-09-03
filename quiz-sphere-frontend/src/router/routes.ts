@@ -45,7 +45,7 @@ export const routes: Array<RouteRecordRaw> = [
     },
   },
   {
-    path: "/add/scoring_result/:id",
+    path: "/add/scoring_result/:appId",
     name: "创建评分",
     component: AddScoringResultView,
     props: true,
