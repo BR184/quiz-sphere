@@ -72,7 +72,7 @@ public class UserAnswerController {
         // 数据校验
         userAnswerService.validUserAnswer(userAnswer, true);
         App appId = appService.getById(userAnswerAddRequest.getAppId());
-        ThrowUtils.throwIf(appId.getReviewStatus().equals(ReviewStatusEnum.APPROVED.getValue()), ErrorCode.OPERATION_ERROR, "题目所属应用未通过审核");
+        ThrowUtils.throwIf(!appId.getReviewStatus().equals(ReviewStatusEnum.APPROVED.getValue()), ErrorCode.OPERATION_ERROR, "题目所属应用未通过审核");
         // 填充默认值
         User loginUser = userService.getLoginUser(request);
         userAnswer.setUserId(loginUser.getId());
@@ -186,11 +186,13 @@ public class UserAnswerController {
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<UserAnswerVO>> listUserAnswerVOByPage(@RequestBody UserAnswerQueryRequest userAnswerQueryRequest,
-                                                               HttpServletRequest request) {
+                                                                   HttpServletRequest request) {
         long current = userAnswerQueryRequest.getCurrent();
         long size = userAnswerQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        //本人校验
+        ThrowUtils.throwIf(!userAnswerQueryRequest.getUserId().equals(request.getSession().getId()), ErrorCode.NO_AUTH_ERROR, "您没有权限查看该用户答案");
         // 查询数据库
         Page<UserAnswer> userAnswerPage = userAnswerService.page(new Page<>(current, size),
                 userAnswerService.getQueryWrapper(userAnswerQueryRequest));
@@ -207,7 +209,7 @@ public class UserAnswerController {
      */
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<UserAnswerVO>> listMyUserAnswerVOByPage(@RequestBody UserAnswerQueryRequest userAnswerQueryRequest,
-                                                                 HttpServletRequest request) {
+                                                                     HttpServletRequest request) {
         ThrowUtils.throwIf(userAnswerQueryRequest == null, ErrorCode.PARAMS_ERROR);
         // 补充查询条件，只查询当前登录用户的数据
         User loginUser = userService.getLoginUser(request);

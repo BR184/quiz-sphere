@@ -1,27 +1,9 @@
 <template>
   <div id="user-layout">
     <a-layout style="height: 100vh">
-      <a-layout-header class="header">
-        <a-space class="header-inner" @click="doIndexClick()">
-          <img class="logo" src="@/assets/logo.png" alt="logo" />
-          <a-space
-            style="margin-right: 40px"
-            direction="vertical"
-            align="center"
-          >
-            <div class="title-main">测试鸭-AI打分中心</div>
-            <div class="title-sub">QuziSphere With AI GPT</div>
-          </a-space>
-        </a-space>
-      </a-layout-header>
       <a-layout-content class="content">
         <router-view></router-view>
       </a-layout-content>
-      <a-layout-footer class="footer">
-        <a href="https://github.com/BR184" target="_blank">
-          我的个人仓库地址
-        </a>
-      </a-layout-footer>
     </a-layout>
   </div>
 </template>
@@ -30,9 +12,6 @@
 import { useRouter } from "vue-router";
 
 const router = useRouter();
-const doIndexClick = () => {
-  router.push("/");
-};
 </script>
 
 <style scoped>

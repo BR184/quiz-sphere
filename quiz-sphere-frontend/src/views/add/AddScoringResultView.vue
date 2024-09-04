@@ -14,6 +14,9 @@
       <a-form-item label="应用id">
         {{ appId }}
       </a-form-item>
+      <a-form-item v-if="updateId" label="评分id">
+        {{ updateId }}
+      </a-form-item>
       <a-form-item field="resultName" label="结果名称">
         <a-input
           size="medium"
@@ -60,14 +63,21 @@
           placeholder="请输入结果得分范围"
         />
       </a-form-item>
+      <a-form-item>
+        <a-space direction="vertical" style="width: 285px; margin-top: 20px">
+          <a-button type="primary" size="large" :long="true" html-type="submit"
+            >提交
+          </a-button>
+        </a-space>
+      </a-form-item>
     </a-form>
     <a-typography-title :heading="4">评分管理</a-typography-title>
-    <ScoringResultTable :appId="appId" :do-update="doUpdate" />
+    <ScoringResultTable :appId="appId" :do-update="doUpdate" ref="tableRef" />
   </a-space>
 </template>
 
 <script setup lang="ts">
-import { ref, watchEffect } from "vue";
+import { ref } from "vue";
 import message from "@arco-design/web-vue/es/message";
 import { useRouter } from "vue-router";
 import {
@@ -91,9 +101,6 @@ const props = withDefaults(defineProps<Props>(), {
   },
 });
 
-// eslint-disable-next-line no-undef
-const oldScoringResult = ref<API.ScoringResultVO>();
-
 const form = ref({
   resultDesc: "",
   resultName: "",
@@ -108,51 +115,40 @@ const doUpdate = (scoringResult: API.ScoringResultVO) => {
   updateId.value = scoringResult.id;
   form.value = scoringResult;
 };
+//当子组件初始化完后会自动负值
+const tableRef = ref();
 
-/**
- * 加载数据
- */
-// const loadData = async () => {
-//   if (!props.id) {
-//     return;
-//   }
-//   const res = await getScoringResultVoByIdUsingGet({
-//     id: props.id,
-//   });
-//   if (res.data.code === 0 && res.data.data) {
-//     oldScoringResult.value = res.data.data;
-//     form.value = res.data.data;
-//   } else {
-//     message.error("获取信息失败！" + res.data.msg);
-//   }
-// };
-// //获取旧数据
-// watchEffect(() => {
-//   loadData();
-// });
-//
-//
-// const handleSubmit = async () => {
-//   let res;
-//   //如果是修改APP
-//   if (props.id) {
-//     res = await editScoringResultUsingPost({
-//       id: props.id,
-//       ...form.value,
-//     });
-//   } else {
-//     //如果是创建APP
-//     res = await addScoringResultUsingPost(form.value);
-//   }
-//   if (res.data.code === 0) {
-//     message.success("提交成功，即将跳转到结果详情页");
-//     setTimeout(() => {
-//       router.push(`/app/detail/${props.id ?? res.data.data}`);
-//     }, 3000);
-//   } else {
-//     message.error("提交失败！" + res.data.message);
-//   }
-// };
+const handleSubmit = async () => {
+  if (!props.appId) {
+    return;
+  }
+  let res;
+  //如果是修改题目
+  if (updateId.value) {
+    res = await editScoringResultUsingPost({
+      appId: props.appId,
+      id: updateId.value,
+      ...form.value,
+    });
+  } else {
+    //如果是创建题目
+    res = await addScoringResultUsingPost(form.value);
+  }
+  if (res.data.code === 0) {
+    message.success("提交成功！");
+  } else {
+    message.error("提交失败！" + res.data.message);
+  }
+  if (tableRef.value) {
+    await tableRef.value.loadData();
+    updateId.value = undefined;
+    form.value.resultPicture = "";
+    form.value.resultDesc = "";
+    form.value.resultName = "";
+    form.value.resultProp = "";
+    form.value.resultScoreRange = "";
+  }
+};
 </script>
 
 <style scoped>

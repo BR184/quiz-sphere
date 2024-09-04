@@ -12,6 +12,7 @@ import com.kl.quizsphere.model.dto.scoringresult.ScoringResultQueryRequest;
 import com.kl.quizsphere.model.entity.App;
 import com.kl.quizsphere.model.entity.ScoringResult;
 import com.kl.quizsphere.model.entity.User;
+import com.kl.quizsphere.model.enums.AppTypeEnum;
 import com.kl.quizsphere.model.vo.ScoringResultVO;
 import com.kl.quizsphere.model.vo.UserVO;
 import com.kl.quizsphere.service.AppService;
@@ -48,7 +49,7 @@ public class ScoringResultServiceImpl extends ServiceImpl<ScoringResultMapper, S
      * 校验数据
      *
      * @param scoringResult
-     * @param add      对创建的数据进行校验
+     * @param add           对创建的数据进行校验
      */
     @Override
     public void validScoringResult(ScoringResult scoringResult, boolean add) {
@@ -59,14 +60,24 @@ public class ScoringResultServiceImpl extends ServiceImpl<ScoringResultMapper, S
         String resultProp = scoringResult.getResultProp();
         Integer resultScoreRange = scoringResult.getResultScoreRange();
         Long appId = scoringResult.getAppId();
-
         // 创建数据时，参数不能为空
         if (add) {
             //  补充校验规则
-            ThrowUtils.throwIf(StringUtils.isBlank(resultName), ErrorCode.PARAMS_ERROR);
-            ThrowUtils.throwIf(StringUtils.isBlank(resultDesc), ErrorCode.PARAMS_ERROR);
-            ThrowUtils.throwIf(StringUtils.isBlank(resultProp), ErrorCode.PARAMS_ERROR);
-
+            App app = appService.getById(appId);
+            ThrowUtils.throwIf(app == null, ErrorCode.PARAMS_ERROR, "应用不存在");
+            if (app.getAppType().equals(AppTypeEnum.SCORE.getValue())) {
+                ThrowUtils.throwIf(StringUtils.isBlank(resultName), ErrorCode.PARAMS_ERROR, "评分名称不能为空");
+                ThrowUtils.throwIf(StringUtils.isBlank(resultDesc), ErrorCode.PARAMS_ERROR, "评分描述不能为空");
+                ThrowUtils.throwIf(resultScoreRange == null, ErrorCode.PARAMS_ERROR, "评分区间不能为空");
+                resultProp = null;
+            } else if (app.getAppType().equals(AppTypeEnum.TEST.getValue())) {
+                ThrowUtils.throwIf(StringUtils.isBlank(resultName), ErrorCode.PARAMS_ERROR, "测试名称不能为空");
+                ThrowUtils.throwIf(StringUtils.isBlank(resultDesc), ErrorCode.PARAMS_ERROR, "测试描述不能为空");
+                ThrowUtils.throwIf(StringUtils.isBlank(resultProp), ErrorCode.PARAMS_ERROR, "测试标签不能为空");
+                resultScoreRange = null;
+            } else {
+                ThrowUtils.throwIf(true, ErrorCode.PARAMS_ERROR, "应用类型错误");
+            }
         }
         // 修改数据时，有参数则校验
         // 补充校验规则
@@ -82,8 +93,6 @@ public class ScoringResultServiceImpl extends ServiceImpl<ScoringResultMapper, S
         if (resultScoreRange != null) {
             ThrowUtils.throwIf(resultScoreRange < 0, ErrorCode.PARAMS_ERROR, "答案分数范围不能为负数");
         }
-        App app = appService.getById(appId);
-        ThrowUtils.throwIf(app == null, ErrorCode.PARAMS_ERROR, "应用不存在");
     }
 
     /**

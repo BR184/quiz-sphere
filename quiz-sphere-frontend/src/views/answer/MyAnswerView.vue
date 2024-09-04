@@ -45,6 +45,12 @@
     <template #resultPicture="{ record }">
       <a-image width="64" :src="record.resultPicture" />
     </template>
+    <template #appType="{ record }">
+      {{ APP_TYPE_MAP[record.appType] }}
+    </template>
+    <template #scoringStrategy="{ record }">
+      {{ APP_SCORING_STRATEGY_MAP[record.scoringStrategy] }}
+    </template>
     <template #createTime="{ record }">
       <a-date-picker
         :default-value="formatDate(record.createTime)"
@@ -65,7 +71,6 @@
     </template>
     <template #optional="{ record }">
       <a-space>
-        <a-button status="success" @click="doUpdate?.(record)">修改</a-button>
         <a-button status="danger" @click="doDelete(record)">删除</a-button>
       </a-space>
     </template>
@@ -73,63 +78,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watchEffect, defineExpose } from "vue";
+import { ref, watchEffect } from "vue";
 import {
-  deleteScoringResultUsingPost,
-  listScoringResultVoByPageUsingPost,
-} from "@/api/scoringResultController";
+  deleteUserAnswerUsingPost,
+  listMyUserAnswerVoByPageUsingPost,
+} from "@/api/userAnswerController";
 import message from "@arco-design/web-vue/es/message";
-import { withDefaults, defineProps } from "vue";
+import { APP_SCORING_STRATEGY_MAP, APP_TYPE_MAP } from "@/constant/app";
 
-interface Props {
-  appId: string;
-  // eslint-disable-next-line no-undef
-  doUpdate: (scoringResult: API.ScoringResultVO) => void;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  appId: () => {
-    return "";
-  },
-});
 /**
  * 格式化日期
  */
 const formatDate = (date: string) => {
   return new Date(date);
 };
-
 // eslint-disable-next-line no-undef
-const formSearchParams = ref<API.ScoringResultQueryRequest>({});
+const formSearchParams = ref<API.UserAnswerQueryRequest>({});
 
 // 初始化搜索条件（不应该被修改）
 const initSearchParams = {
   current: 1,
   pageSize: 10,
-  sortField: "createTime",
-  sortOrder: "descend",
 };
 
 // eslint-disable-next-line no-undef
-const searchParams = ref<API.ScoringResultQueryRequest>({
+const searchParams = ref<API.UserAnswerQueryRequest>({
   ...initSearchParams,
 });
+
 // eslint-disable-next-line no-undef
-const dataList = ref<API.ScoringResultVO[]>([]);
+const dataList = ref<API.User[]>([]);
 const total = ref<number>(0);
 
 /**
  * 加载数据
  */
 const loadData = async () => {
-  if (!props.appId) {
-    return;
-  }
-  const params = {
-    appId: props.appId,
-    ...searchParams.value,
-  };
-  const res = await listScoringResultVoByPageUsingPost(params);
+  const res = await listMyUserAnswerVoByPageUsingPost(searchParams.value);
   if (res.data.code === 0) {
     dataList.value = res.data.data?.records || [];
     total.value = res.data.data?.total || 0;
@@ -137,12 +122,6 @@ const loadData = async () => {
     message.error("获取数据失败，" + res.data.message);
   }
 };
-/**
- * 暴露给父组件
- */
-defineExpose({
-  loadData,
-});
 
 /**
  * 执行搜索
@@ -169,13 +148,14 @@ const onPageChange = (page: number) => {
  * 删除
  * @param record
  */
+
 // eslint-disable-next-line no-undef
-const doDelete = async (record: API.ScoringResult) => {
+const doDelete = async (record: API.UserAnswerVO) => {
   if (!record.id) {
     return;
   }
 
-  const res = await deleteScoringResultUsingPost({
+  const res = await deleteUserAnswerUsingPost({
     id: record.id,
   });
   if (res.data.code === 0) {
@@ -199,8 +179,8 @@ const columns = [
     dataIndex: "id",
   },
   {
-    title: "名称",
-    dataIndex: "resultName",
+    title: "选项",
+    dataIndex: "choices",
   },
   {
     title: "描述",
@@ -212,22 +192,23 @@ const columns = [
     slotName: "resultPicture",
   },
   {
-    title: "结果属性",
-    dataIndex: "resultProp",
+    title: "得分",
+    dataIndex: "resultScore",
   },
   {
-    title: "评分范围",
-    dataIndex: "resultScoreRange",
+    title: "应用类型",
+    dataIndex: "appType",
+    slotName: "appType",
   },
   {
-    title: "创建时间",
+    title: "评分策略",
+    dataIndex: "scoringStrategy",
+    slotName: "scoringStrategy",
+  },
+  {
+    title: "完成时间",
     dataIndex: "createTime",
     slotName: "createTime",
-  },
-  {
-    title: "更新时间",
-    dataIndex: "updateTime",
-    slotName: "updateTime",
   },
   {
     title: "操作",

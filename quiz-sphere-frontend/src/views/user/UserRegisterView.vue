@@ -22,7 +22,7 @@
         field="userPassword"
         label="密码"
         tooltip="
-        密码长度在8到20之间，且至少包含数字/字母/特殊字符中的两种"
+          密码长度在8到20之间，且至少包含数字/字母/特殊字符中的两种"
       >
         <a-input-password
           size="large"
@@ -34,7 +34,7 @@
         field="checkPassword"
         label="确认密码"
         tooltip="
-         重复你的密码"
+           重复你的密码"
       >
         <a-input-password
           size="large"

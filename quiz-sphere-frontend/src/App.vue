@@ -5,6 +5,9 @@
     >
       <user-layout />
     </template>
+    <template v-else-if="route.path.startsWith('/answer/do')">
+      <clean-layout />
+    </template>
     <template v-else>
       <basic-layout />
     </template>
@@ -17,6 +20,7 @@ import { useRoute } from "vue-router";
 import "@/access";
 import { onMounted } from "vue";
 import UserLayout from "@/layout/UserLayout.vue";
+import CleanLayout from "@/layout/CleanLayout.vue";
 
 const route = useRoute();
 

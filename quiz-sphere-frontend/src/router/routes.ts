@@ -1,9 +1,7 @@
 import { RouteRecordRaw } from "vue-router";
 import HomeView from "@/views/HomeView.vue";
-import UserLayout from "@/layout/UserLayout.vue";
 import ACCESS_ENUM from "@/access/accessEnum";
 import NoAuthPage from "@/views/NoAuthPage.vue";
-import userRegisterView from "@/views/user/UserRegisterView.vue";
 import UserLoginView from "@/views/user/UserLoginView.vue";
 import AdminUserPage from "@/views/admin/AdminUserPage.vue";
 import AdminQuestionPage from "@/views/admin/AdminQuestionPage.vue";
@@ -14,6 +12,10 @@ import AppDetailView from "@/views/app/AppDetailView.vue";
 import AddAppView from "@/views/add/AddAppView.vue";
 import AddQuestionView from "@/views/add/AddQuestionView.vue";
 import AddScoringResultView from "@/views/add/AddScoringResultView.vue";
+import UserRegisterView from "@/views/user/UserRegisterView.vue";
+import DoAnswerView from "@/views/answer/DoAnswerView.vue";
+import MyAnswerView from "@/views/answer/MyAnswerView.vue";
+import AnswerResultView from "@/views/answer/AnswerResultView.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
@@ -60,6 +62,34 @@ export const routes: Array<RouteRecordRaw> = [
     component: AppDetailView,
     meta: {
       hideInMenu: true,
+    },
+  },
+  {
+    path: "/answer/do/:appId",
+    name: "答题",
+    component: DoAnswerView,
+    props: true,
+    meta: {
+      hideInMenu: true,
+      access: ACCESS_ENUM.USER,
+    },
+  },
+  {
+    path: "/answer/result/:id",
+    name: "答题结果",
+    component: AnswerResultView,
+    props: true,
+    meta: {
+      hideInMenu: true,
+      access: ACCESS_ENUM.USER,
+    },
+  },
+  {
+    path: "/answer/my",
+    name: "我的答题",
+    component: MyAnswerView,
+    meta: {
+      access: ACCESS_ENUM.USER,
     },
   },
   {
@@ -113,12 +143,11 @@ export const routes: Array<RouteRecordRaw> = [
   {
     path: "/user",
     name: "用户",
-    component: UserLayout,
     children: [
       {
         path: "/user/register",
         name: "用户注册",
-        component: userRegisterView,
+        component: UserRegisterView,
       },
       {
         path: "/user/login",

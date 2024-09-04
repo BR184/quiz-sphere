@@ -27,8 +27,7 @@ import GlobalHeader from "@/components/GlobalHeader.vue";
 #basic-layout .content {
   width: 100%;
   max-width: 1440px;
-  margin: 0 auto 30px;
-  padding: 20px 50px;
+  margin: 30px auto 30px;
   background-color: #fff;
 }
 

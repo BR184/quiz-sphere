@@ -1,22 +1,29 @@
 <template>
-  <div class="app-detail-container">
+  <div class="answer-result-container">
     <a-card>
       <a-row style="margin-bottom: 16px">
-        <a-col flex="auto" class="content-wrapper">
+        <a-col flex="auto" class="content-wapper">
           <a-typography-title
+            v-if="data.appType == APP_TYPE_ENUM.TEST"
             style="font-weight: bold; max-width: 900px; text-wrap: auto"
           >
-            {{ data.appName }}
+            {{ data.resultName }}
+          </a-typography-title>
+          <a-typography-title
+            v-if="data.appType == APP_TYPE_ENUM.SCORE"
+            style="font-weight: bold"
+          >
+            得分：{{ data.resultScore }}
           </a-typography-title>
           <hr style="width: 500px; margin-left: 0; border: 1px solid #d7d7d7" />
-          <a-typography-title :heading="6" class="app-desc-container">
+          <a-typography-title :heading="4" class="userAnswer-desc-container">
             <!--{{ "\xa0\xa0\xa0\xa0\xa0\xa0" }}-->
-            {{ data.appDesc }}
+            {{ data.resultDesc }}
           </a-typography-title>
-          <a-typography-paragraph class="app-author-wrapper">
-            作者：
+          <a-typography-paragraph class="userAnswer-author-wapper">
+            题目发布者：
             <a-tag
-              class="app-author-container"
+              class="userAnswer-author-container"
               :color="
                 data.user?.userRole == ACCESS_ENUM.USER ? '#d7d7d7' : '#ff5722'
               "
@@ -60,6 +67,12 @@
           <a-typography-paragraph>
             评分模式： {{ APP_SCORING_STRATEGY_MAP[data.scoringStrategy] }}
           </a-typography-paragraph>
+          <a-typography-paragraph spacing="close" type="secondary">
+            结果ID:{{ data.id }}
+          </a-typography-paragraph>
+          <a-typography-paragraph spacing="close" type="secondary">
+            应用ID:{{ data.appId }}
+          </a-typography-paragraph>
           <a-typography-paragraph type="secondary">
             创建时间：{{ dayjs(data.createTime).format("YYYY-MM-DD HH:mm:ss") }}
           </a-typography-paragraph>
@@ -67,35 +80,19 @@
             更新时间：{{ dayjs(data.updateTime).format("YYYY-MM-DD HH:mm:ss") }}
           </a-typography-paragraph>
           <a-space>
-            <a-button type="primary" :href="`/answer/do/${id}`"
-              >开始答题
+            <a-button type="primary" :href="`/answer/do/${data.appId}`"
+              >再次答题
             </a-button>
             <a-button>分享应用</a-button>
-            <a-button
-              type="dashed"
-              status="warning"
-              v-if="isAuthor"
-              :href="`/add/question/${id}`"
-              >设置题目
-            </a-button>
-            <a-button
-              type="dashed"
-              status="warning"
-              v-if="isAuthor"
-              :href="`/add/scoring_result/${id}`"
-              >设置评分
-            </a-button>
-            <a-button
-              type="outline"
-              status="warning"
-              v-if="isAuthor"
-              :href="`/add/app/${id}`"
-              >修改应用
-            </a-button>
           </a-space>
         </a-col>
-        <a-col flex="420px">
-          <a-image width="100%" style="margin-top: 50px" :src="data.appIcon" />
+        <a-col flex="400px">
+          <a-image
+            v-if="data.resultPicture != null"
+            width="100%"
+            style="margin-top: 50px"
+            :src="data.resultPicture"
+          />
         </a-col>
       </a-row>
     </a-card>
@@ -103,26 +100,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, ref, watchEffect, withDefaults } from "vue";
+import { defineProps, ref, watchEffect, withDefaults } from "vue";
 import message from "@arco-design/web-vue/es/message";
-import { getAppVoByIdUsingGet } from "@/api/appController";
+import { getUserAnswerVoByIdUsingGet } from "@/api/userAnswerController";
 import { useRouter } from "vue-router";
 import ACCESS_ENUM from "@/access/accessEnum";
 import { dayjs } from "@arco-design/web-vue/es/_utils/date";
-import { useLoginUserStore } from "@/store/userStore";
-import { APP_SCORING_STRATEGY_MAP, APP_TYPE_MAP } from "../../constant/app";
+import {
+  APP_SCORING_STRATEGY_MAP,
+  APP_TYPE_ENUM,
+  APP_TYPE_MAP,
+} from "../../constant/app";
 
 // eslint-disable-next-line no-undef
-const data = ref<API.AppVO>({});
-
-//获取登录用户
-const loginUserStore = useLoginUserStore();
-let loginUserId = loginUserStore.loginUser?.id;
-//是否为本人
-
-const isAuthor = computed(() => {
-  return loginUserId && loginUserId === data.value.userId;
-});
+const data = ref<API.UserAnswerVO>({});
 
 const router = useRouter();
 
@@ -146,7 +137,7 @@ const loadData = async () => {
   if (!props.id) {
     return;
   }
-  const res = await getAppVoByIdUsingGet({
+  const res = await getUserAnswerVoByIdUsingGet({
     id: props.id,
   });
   if (res.data.code === 0) {
@@ -165,18 +156,18 @@ watchEffect(() => {
 </script>
 
 <style scoped>
-.app-author-container {
+.userAnswer-author-container {
   font-weight: bold;
   border-radius: 10px;
   cursor: pointer;
   user-select: none;
 }
 
-.content-wrapper > .app-author-wrapper {
-  margin-top: 30px;
+.content-wapper > .userAnswer-author-wapper {
+  margin-top: 5px;
 }
 
-.app-desc-container {
+.userAnswer-desc-container {
   width: 90vw;
   max-width: 900px;
   text-wrap: auto;

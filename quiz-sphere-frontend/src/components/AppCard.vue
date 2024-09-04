@@ -20,7 +20,18 @@
           />
         </div>
       </template>
-      <a-card-meta :title="app.appName" :description="app.appDesc">
+      <a-card-meta
+        :title="
+          app.appName?.length > 17
+            ? app.appName?.substring(0, 17) + '...'
+            : app.appName
+        "
+        :description="
+          app.appDesc.length > 38
+            ? app.appDesc.substring(0, 38) + '...'
+            : app.appDesc
+        "
+      >
         <template #avatar>
           <div
             :style="{ display: 'flex', alignItems: 'center', color: '#1D2129' }"
@@ -33,15 +44,17 @@
             <a-typography-text
               >{{
                 app.user?.userName ??
-                "QZ用户" +
-                  app.user?.id.toString().substring(0, 4) +
-                  "······" +
-                  app.user?.id
-                    .toString()
-                    .substring(
-                      app.user?.id.toString().length - 4,
-                      app.user?.id.toString().length
-                    )
+                (app.user?.id
+                  ? "用户" +
+                    app.user?.id.toString().substring(0, 4) +
+                    "······" +
+                    app.user?.id
+                      .toString()
+                      .substring(
+                        app.user?.id.toString().length - 4,
+                        app.user?.id.toString().length
+                      )
+                  : "神秘用户")
               }}
             </a-typography-text>
           </div>
