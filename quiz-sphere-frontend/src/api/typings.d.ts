@@ -103,6 +103,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseListQuestionContentDTO_ = {
+    code?: number;
+    data?: QuestionContentDTO[];
+    message?: string;
+  };
+
   type BaseResponseLoginUserVO_ = {
     code?: number;
     data?: LoginUserVO;
@@ -551,6 +557,12 @@ declare namespace API {
   type QuestionAddRequest = {
     appId?: number;
     questionContent?: QuestionContentDTO[];
+  };
+
+  type QuestionAiGenerateRequest = {
+    appId?: number;
+    optionNumber?: number;
+    questionNumber?: number;
   };
 
   type QuestionContentDTO = {

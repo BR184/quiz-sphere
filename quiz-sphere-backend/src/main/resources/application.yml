@@ -101,3 +101,7 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.kl.quizsphere.controller
+#智谱AI配置
+zhipu-ai:
+  api:
+    secretKey: 3e1da90e1b16cbddde07342a3abf7071.bEjR1pL4gC4mNF8Q

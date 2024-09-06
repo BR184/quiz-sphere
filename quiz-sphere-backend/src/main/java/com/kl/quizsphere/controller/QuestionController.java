@@ -10,21 +10,25 @@ import com.kl.quizsphere.common.ResultUtils;
 import com.kl.quizsphere.constant.UserConstant;
 import com.kl.quizsphere.exception.BusinessException;
 import com.kl.quizsphere.exception.ThrowUtils;
-import com.kl.quizsphere.model.dto.question.QuestionAddRequest;
-import com.kl.quizsphere.model.dto.question.QuestionEditRequest;
-import com.kl.quizsphere.model.dto.question.QuestionQueryRequest;
-import com.kl.quizsphere.model.dto.question.QuestionUpdateRequest;
+import com.kl.quizsphere.manager.AiManager;
+import com.kl.quizsphere.model.dto.question.*;
+import com.kl.quizsphere.model.entity.App;
 import com.kl.quizsphere.model.entity.Question;
 import com.kl.quizsphere.model.entity.User;
+import com.kl.quizsphere.model.enums.AppTypeEnum;
 import com.kl.quizsphere.model.vo.QuestionVO;
+import com.kl.quizsphere.service.AppService;
 import com.kl.quizsphere.service.QuestionService;
 import com.kl.quizsphere.service.UserService;
+import com.zhipu.oapi.ClientV4;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 题目接口
@@ -42,6 +46,12 @@ public class QuestionController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private AppService appService;
+
+    @Resource
+    private AiManager aiManager;
 
     // region 增删改查
 
@@ -241,4 +251,84 @@ public class QuestionController {
     }
 
     // endregion
+
+    // region AI 题目生成请求
+    // region String-测试类题目系统prompt
+    public static final String QUESTION_TEST_GENERATE_SYSTEM_PROMPT = "你是一位严谨的心理学专家，生成4组两两对立的理论模型考察用户（如MBTI的I-E/S-N/T-F/J-P）。我会给你如下信息：\n" +
+            "```\n" +
+            "模型名称，\n" +
+            "【【【模型描述】】】，\n" +
+            "要生成的题目数，\n" +
+            "每个题目的选项数\n" +
+            "```\n" +
+            "请你根据上述信息，按照以下步骤来出题：\n" +
+            "1. 要求：题目和选项简短，不能重复，不包含序号，不直接问答案，生成隐含测试问题。\n" +
+            "2. 严格按照下面的 JSON 格式输出：\n" +
+            "```\n" +
+            "[{\"options\":[{\"value\":\"让情感支配理智\",\"key\":\"A\"},{\"value\":\"让理智主导情感\",\"key\":\"B\"},......],\"title\":\"你经常\"},......]\n" +
+            "```\n" +
+            "options 是选项且内部数量按照选项数生成，value 是选项内容，key是选项且每题从'A'开始，title 是题目且需要在options之后\n" +
+            "3. 确保题目不含序号，维度为两两对立的四组模型，题目以隐含方式测试。\n" +
+            "4. 返回的题目列表格式必须为 JSON 数组";
+    // endregion
+    // region String-问答类题目系统prompt
+    public static final String QUESTION_ANSWER_GENERATE_SYSTEM_PROMPT = "你是一位经验丰富的出卷专家，负责生成完整严谨且丰富的选拔性考试试题，我会给你如下信息：\n" +
+            "```\n" +
+            "试卷名称，\n" +
+            "【【【试卷描述】】】，\n" +
+            "要生成的题目数，\n" +
+            "每个题目的选项数\n" +
+            "```\n" +
+            "请你根据上述信息，按照以下步骤来出题：\n" +
+            "1. 要求：题目和选项简短，不能重复，不包含序号，每道题只有一个答案\n" +
+            "2. 严格按照下面的 JSON 格式输出：\n" +
+            "```\n" +
+            "[{\"options\":[{\"value\":\"影响卫星导航、空间通讯\",\"key\":\"A\"},{\"value\":\"诱发地球出现地震灾害\",\"key\":\"B\"},......],\"title\":\"太阳活动对地球的影响主要有：\"},......]\n" +
+            "```\n" +
+            "options 是选项且内部数量按照选项数生成，value 是选项内容，key是选项且每题从'A'开始，title 是题目且需要在options之后\n" +
+            "3. 确保题目不含序号，题目难度需要逐渐递增且需要具有选拔性。\n" +
+            "4. 返回的题目列表格式必须为 JSON 数组";
+
+    // endregion
+    @PostMapping("/ai/generate_question")
+    public BaseResponse<List<QuestionContentDTO>> aiGenerateQuestion(@RequestBody QuestionAiGenerateRequest generateRequest) {
+        //字段校验
+        ThrowUtils.throwIf(generateRequest == null, ErrorCode.PARAMS_ERROR, "参数错误");
+        ThrowUtils.throwIf(generateRequest.getQuestionNumber() > 20 || generateRequest.getQuestionNumber() < 5, ErrorCode.PARAMS_ERROR, "请求题目数量超出范围");
+        ThrowUtils.throwIf(generateRequest.getOptionNumber() < 0 || generateRequest.getOptionNumber() > 6, ErrorCode.PARAMS_ERROR, "请求选项数量超出范围");
+        //数据获取+数据校验
+        App app = appService.getById(generateRequest.getAppId());
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        //封装Prompt
+        String prompt = getQuestionGenerateMessage(app, generateRequest.getQuestionNumber(), generateRequest.getOptionNumber());
+        System.out.println(prompt);
+        //Ai生成
+        String result = "";
+        if (app.getAppType() == AppTypeEnum.TEST.getValue()) {
+            result = aiManager.getOneShotSyncDefaultResponse(QUESTION_TEST_GENERATE_SYSTEM_PROMPT, prompt);
+        } else if (app.getAppType() == AppTypeEnum.SCORE.getValue()) {
+            result = aiManager.getOneShotSyncDefaultResponse(QUESTION_ANSWER_GENERATE_SYSTEM_PROMPT, prompt);
+        }
+        //数据校验
+        int left = result.indexOf("[");
+        int right = result.lastIndexOf("]");
+        ThrowUtils.throwIf(left == -1 || right == -1, ErrorCode.OPERATION_ERROR, "参数错误匹配错误，请重试！");
+        result = result.substring(left, right + 1);
+        List<QuestionContentDTO> list = JSONUtil.toList(result, QuestionContentDTO.class);
+        System.out.println(JSONUtil.toJsonStr(list));
+        return ResultUtils.success(list);
+    }
+
+
+    /**
+     * AI 题目生成用户消息构造器
+     *
+     * @param app
+     * @param questionNumber
+     * @param optionsNumber
+     * @return
+     */
+    public String getQuestionGenerateMessage(App app, Integer questionNumber, Integer optionsNumber) {
+        return app.getAppName() + "，\n【【【" + app.getAppDesc() + "】】】，\n" + questionNumber + "，\n" + optionsNumber + "\n";
+    }
 }

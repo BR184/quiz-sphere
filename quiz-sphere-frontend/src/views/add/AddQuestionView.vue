@@ -15,14 +15,21 @@
       <div class="question-form-top">
         <div class="question-form-top-container">
           <a-form-item extra="应用ID"> {{ appId }}</a-form-item>
-          <a-button
-            @click="addQuestion(questionContent.length)"
-            type="primary"
-            status="warning"
-            size="large"
-          >
-            添加题目
-          </a-button>
+          <a-space size="medium">
+            <!-- AI生成的抽屉组件 -->
+            <AiGenerateQuestionDrawer
+              :appId="appId"
+              :onSuccess="onAiResponseSuccess"
+            />
+            <a-button
+              @click="addQuestion(questionContent.length)"
+              type="primary"
+              status="warning"
+              size="medium"
+            >
+              添加题目
+            </a-button>
+          </a-space>
         </div>
       </div>
       <div class="question-form-mid">
@@ -132,7 +139,10 @@
                   label="选项结果"
                   style="margin-bottom: 5px"
                   extra="选项结果"
-                  v-if="getAppType === APP_TYPE_ENUM.TEST"
+                  v-if="
+                    getAppType === APP_TYPE_ENUM.TEST &&
+                    getAppScoringResult !== APP_SCORING_STRATEGY_ENUM.AI
+                  "
                 >
                   <a-input
                     size="small"
@@ -183,6 +193,7 @@
           <a-button size="large" :long="true" html-type="submit" type="dashed">
             提交
           </a-button>
+          <div id="bottom" />
         </a-space>
       </a-form-item>
     </a-form>
@@ -201,7 +212,12 @@ import {
 } from "@/api/questionController";
 import message from "@arco-design/web-vue/es/message";
 import { getAppVoByIdUsingGet } from "@/api/appController";
-import { APP_TYPE_ENUM, APP_TYPE_MAP } from "@/constant/app";
+import {
+  APP_SCORING_STRATEGY_ENUM,
+  APP_TYPE_ENUM,
+  APP_TYPE_MAP,
+} from "@/constant/app";
+import AiGenerateQuestionDrawer from "@/views/add/components/AiGenerateQuestionDrawer.vue";
 
 interface Props {
   appId: string;
@@ -316,6 +332,12 @@ const getAppType = computed(() => {
   }
   return "";
 });
+const getAppScoringResult = computed(() => {
+  if (appInfo.value) {
+    return appInfo.value.scoringStrategy;
+  }
+  return "";
+});
 //获取旧数据
 watchEffect(() => {
   loadData();
@@ -348,6 +370,22 @@ const handleSubmit = async () => {
   } else {
     message.error("提交失败！" + res.data.message);
   }
+};
+/**
+ * 当AI生成题目成功时执行
+ */
+// eslint-disable-next-line no-undef
+const onAiResponseSuccess = (result: API.QuestionContentDTO[]) => {
+  message.success(`成功！共生成${result.length}道题目，请核查题目！`);
+  questionContent.value = [...questionContent.value, ...result];
+  setTimeout(() => {
+    let divElement = document.getElementById("bottom");
+    divElement.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+      inline: "nearest",
+    });
+  }, 700);
 };
 </script>
 
@@ -394,5 +432,9 @@ const handleSubmit = async () => {
   align-items: center;
   justify-items: center;
   width: 100%;
+}
+
+.ai-generator-button {
+  margin-right: 20px;
 }
 </style>

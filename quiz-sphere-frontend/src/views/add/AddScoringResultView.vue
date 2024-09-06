@@ -79,17 +79,13 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import message from "@arco-design/web-vue/es/message";
-import { useRouter } from "vue-router";
 import {
   addScoringResultUsingPost,
   editScoringResultUsingPost,
-  getScoringResultVoByIdUsingGet,
 } from "@/api/scoringResultController";
 import PictureUploader from "@/components/PictureUploader.vue";
 import { withDefaults, defineProps } from "vue";
 import ScoringResultTable from "@/views/add/components/scoringResultTable.vue";
-
-const router = useRouter();
 
 interface Props {
   appId: string;
@@ -132,7 +128,10 @@ const handleSubmit = async () => {
     });
   } else {
     //如果是创建题目
-    res = await addScoringResultUsingPost(form.value);
+    res = await addScoringResultUsingPost({
+      appId: props.appId,
+      ...form.value,
+    });
   }
   if (res.data.code === 0) {
     message.success("提交成功！");
