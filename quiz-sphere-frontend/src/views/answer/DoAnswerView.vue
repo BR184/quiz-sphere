@@ -4,7 +4,7 @@
       {{ app.appName }}
     </a-typography-title>
     <!--做题区域开始-->
-    <a-space :direction="'vertical'" class="do-answer-content">
+    <a-space :direction="'vertical'" align="center" class="do-answer-content">
       <a-typography-title heading="3"
         >{{
           currentQuestion?.title.match(new RegExp(`^${current}[、.:](?!\\d)`))
@@ -35,9 +35,10 @@
           v-if="current === questionContent.length"
           circle
           :disabled="!currentAnswer"
+          :loading="waitingResponse"
           @click="checkAnswer"
           size="large"
-          >查看结果
+          >{{ waitingResponse ? "AI评分中..." : "查看结果" }}
         </a-button>
         <a-button
           circle
@@ -99,6 +100,8 @@ const questionOptions = computed(() => {
 const currentAnswer = ref<string>();
 //回答列表
 const answerList = reactive<string[]>([]);
+//等待响应
+const waitingResponse = ref(false);
 
 const props = withDefaults(defineProps<Props>(), {
   appId: () => {
@@ -158,6 +161,7 @@ const checkAnswer = async () => {
   if (!props.appId || !answerList) {
     return;
   }
+  waitingResponse.value = true;
   const res = await addUserAnswerUsingPost({
     appId: props.appId,
     choices: answerList,
@@ -167,6 +171,7 @@ const checkAnswer = async () => {
   } else {
     message.error("答案提交失败！" + res.data.message);
   }
+  waitingResponse.value = false;
 };
 </script>
 

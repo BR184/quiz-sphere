@@ -10,11 +10,9 @@ import com.kl.quizsphere.exception.BusinessException;
 import com.kl.quizsphere.exception.ThrowUtils;
 import com.kl.quizsphere.mapper.UserAnswerMapper;
 import com.kl.quizsphere.model.dto.useranswer.UserAnswerQueryRequest;
-import com.kl.quizsphere.model.entity.App;
 import com.kl.quizsphere.model.entity.User;
 import com.kl.quizsphere.model.entity.UserAnswer;
 import com.kl.quizsphere.model.enums.AppScoringStrategyEnum;
-import com.kl.quizsphere.model.enums.ReviewStatusEnum;
 import com.kl.quizsphere.model.vo.UserAnswerVO;
 import com.kl.quizsphere.model.vo.UserVO;
 import com.kl.quizsphere.service.AppService;
@@ -28,7 +26,10 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

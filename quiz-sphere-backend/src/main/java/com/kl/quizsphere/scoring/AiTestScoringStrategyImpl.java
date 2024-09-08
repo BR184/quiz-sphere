@@ -1,7 +1,11 @@
 package com.kl.quizsphere.scoring;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.kl.quizsphere.common.ErrorCode;
 import com.kl.quizsphere.exception.BusinessException;
 import com.kl.quizsphere.exception.ThrowUtils;
@@ -15,10 +19,13 @@ import com.kl.quizsphere.model.vo.QuestionVO;
 import com.kl.quizsphere.service.QuestionService;
 import com.zhipu.oapi.service.v4.model.ChatMessage;
 import com.zhipu.oapi.service.v4.model.ChatMessageRole;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * AI-测评类-应用打分策略
@@ -35,6 +42,20 @@ public class AiTestScoringStrategyImpl implements ScoringStrategy {
 
     @Resource
     private AiManager aiManager;
+
+    @Resource
+    private RedissonClient redissonClient;
+
+    private static final String AI_ANSWER_LOCK = "AI_ANSWER_LOCK";
+
+    /**
+     * 本地缓存 缓存AI评分结果
+     */
+    private final Cache<String, String> answerCacheMap =
+            Caffeine.newBuilder().initialCapacity(1024)
+                    //缓存保存5分钟
+                    .expireAfterAccess(5L, TimeUnit.MINUTES)
+                    .build();
 
 
     //region String-测试类题目打分系统prompt
@@ -142,31 +163,77 @@ public class AiTestScoringStrategyImpl implements ScoringStrategy {
 
     @Override
     public UserAnswer doScore(List<String> choices, App app) throws BusinessException {
-        //1.根据id查询题目和题目结果信息
+        //0.使用Caffeine缓存
         Long appId = app.getId();
-        Question question = questionService.getOne(
-                Wrappers.lambdaQuery(Question.class).eq(Question::getAppId, appId)
-        );
-        QuestionVO questionVO = QuestionVO.objToVo(question);
-        List<QuestionContentDTO> questionContent = questionVO.getQuestionContent();
+        String jsonStr = JSONUtil.toJsonStr(choices);
+        String cacheKey = buildCacheKey(appId, jsonStr);
+        String cacheAnswerJson = answerCacheMap.getIfPresent(cacheKey);
+        //如果有缓存
+        if (StrUtil.isNotBlank(cacheAnswerJson)) {
+            //构造UserAnswer对象，并返回
+            UserAnswer userAnswer = JSONUtil.toBean(cacheAnswerJson, UserAnswer.class);
+            userAnswer.setAppId(appId);
+            userAnswer.setAppType(app.getAppType());
+            userAnswer.setScoringStrategy(app.getScoringStrategy());
+            userAnswer.setChoices(jsonStr);
+            return userAnswer;
+        }
+        //定义Redisson锁
+        RLock lock = redissonClient.getLock(AI_ANSWER_LOCK + cacheKey);//定义Redisson锁
 
-        //2.调用AI获取结果
+        try {
+            //竞争锁
+            boolean res = lock.tryLock(3, 15, TimeUnit.SECONDS);
+            if (!res) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR,"服务器繁忙，请于10秒后重试！");
+            }
+            //1.根据id查询题目和题目结果信息
+            Question question = questionService.getOne(
+                    Wrappers.lambdaQuery(Question.class).eq(Question::getAppId, appId)
+            );
+            QuestionVO questionVO = QuestionVO.objToVo(question);
+            List<QuestionContentDTO> questionContent = questionVO.getQuestionContent();
 
-        List<ChatMessage> chatMessages = getMessageByDetailStrategy(app, questionContent, choices, true);
-        String result = aiManager.getOneShotSyncDefaultResponseByChatMessageList(chatMessages);
+            //2.调用AI获取结果
 
-        //3.解析结果
-        int left = result.indexOf("{");
-        int right = result.lastIndexOf("}");
-        ThrowUtils.throwIf(left == -1 || right == -1, ErrorCode.OPERATION_ERROR, "参数错误匹配错误，请重试！");
-        result = result.substring(left, right + 1);
+            List<ChatMessage> chatMessages = getMessageByDetailStrategy(app, questionContent, choices, true);
+            String result = aiManager.getOneShotSyncDefaultResponseByChatMessageList(chatMessages);
 
-        //4.构造UserAnswer对象，并返回
-        UserAnswer userAnswer = JSONUtil.toBean(result, UserAnswer.class);
-        userAnswer.setAppId(appId);
-        userAnswer.setAppType(app.getAppType());
-        userAnswer.setScoringStrategy(app.getScoringStrategy());
-        userAnswer.setChoices(JSONUtil.toJsonStr(choices));
-        return userAnswer;
+            //3.解析结果
+            int left = result.indexOf("{");
+            int right = result.lastIndexOf("}");
+            ThrowUtils.throwIf(left == -1 || right == -1, ErrorCode.OPERATION_ERROR, "参数错误匹配错误，请重试！");
+            result = result.substring(left, right + 1);
+
+            //缓存
+            answerCacheMap.put(cacheKey, result);
+
+            //4.构造UserAnswer对象，并返回
+            UserAnswer userAnswer = JSONUtil.toBean(result, UserAnswer.class);
+            userAnswer.setAppId(appId);
+            userAnswer.setAppType(app.getAppType());
+            userAnswer.setScoringStrategy(app.getScoringStrategy());
+            userAnswer.setChoices(jsonStr);
+            return userAnswer;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (lock != null && lock.isLocked()) {
+                if (lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
+            }
+        }
+    }
+
+    /**
+     * 构建缓存key
+     *
+     * @param appId
+     * @param choices
+     * @return
+     */
+    private String buildCacheKey(Long appId, String choices) {
+        return "AI_RESULT:" + appId + ":" + DigestUtil.md5Hex(choices);
     }
 }

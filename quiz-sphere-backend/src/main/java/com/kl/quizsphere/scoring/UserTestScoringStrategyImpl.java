@@ -1,7 +1,6 @@
 package com.kl.quizsphere.scoring;
 
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.kl.quizsphere.exception.BusinessException;
 import com.kl.quizsphere.model.dto.question.QuestionContentDTO;
@@ -16,7 +15,6 @@ import com.kl.quizsphere.service.ScoringResultService;
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 自定义-测评类-应用打分策略

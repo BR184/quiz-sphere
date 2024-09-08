@@ -1,7 +1,7 @@
 package com.kl.quizsphere.mapper;
 
-import com.kl.quizsphere.model.entity.PostThumb;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.kl.quizsphere.model.entity.PostThumb;
 
 /**
  * 帖子点赞数据库操作

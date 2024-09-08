@@ -5,6 +5,7 @@ import com.kl.quizsphere.exception.BusinessException;
 import com.zhipu.oapi.ClientV4;
 import com.zhipu.oapi.Constants;
 import com.zhipu.oapi.service.v4.model.*;
+import io.reactivex.Flowable;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -35,6 +36,38 @@ public class AiManager {
     //较高核取样-随机
     private static final float HIGH_TOP_P = 0.9F;
 
+
+    /**
+     * 智谱AI一次性异步稳定参数请求
+     *
+     * @param messageList
+     * @return 流式一次性的AI回复
+     */
+    public Flowable<ModelData> getOneShotAsyncStableResponseByChatMessageList(List<ChatMessage> messageList) {
+        return getResponse(messageList, true, LOW_TEMPERATURE, LOW_TOP_P).getFlowable();
+    }
+
+    /**
+     * 智谱AI一次性异步默认参数请求
+     *
+     * @param messageList
+     * @return 流式一次性的AI回复
+     */
+    public Flowable<ModelData> getOneShotAsyncDefaultResponseByChatMessageList(List<ChatMessage> messageList) {
+        return getResponse(messageList, true, DEFAULT_TEMPERATURE, DEFAULT_TOP_P).getFlowable();
+    }
+
+    /**
+     * 智谱AI一次性异步创意参数请求
+     *
+     * @param messageList
+     * @return 流式一次性的AI回复
+     */
+    public Flowable<ModelData> getOneShotAsyncCreativeResponseByChatMessageList(List<ChatMessage> messageList) {
+        return getResponse(messageList, true, HIGH_TEMPERATURE, HIGH_TOP_P).getFlowable();
+    }
+
+
     /**
      * 智谱AI一次性同步稳定参数请求
      *
@@ -42,7 +75,7 @@ public class AiManager {
      * @return 一条一次性的AI回复
      */
     public String getOneShotSyncStableResponseByChatMessageList(List<ChatMessage> messageList) {
-        return getResponse(messageList, false, LOW_TEMPERATURE, LOW_TOP_P).getChoices().get(0).toString();
+        return getResponse(messageList, false, LOW_TEMPERATURE, LOW_TOP_P).getData().getChoices().get(0).toString();
     }
 
     /**
@@ -52,7 +85,7 @@ public class AiManager {
      * @return 一条一次性的AI回复
      */
     public String getOneShotSyncDefaultResponseByChatMessageList(List<ChatMessage> messageList) {
-        return getResponse(messageList, false, DEFAULT_TEMPERATURE, DEFAULT_TOP_P).getChoices().get(0).toString();
+        return getResponse(messageList, false, DEFAULT_TEMPERATURE, DEFAULT_TOP_P).getData().getChoices().get(0).toString();
     }
 
     /**
@@ -62,7 +95,7 @@ public class AiManager {
      * @return 一条一次性的AI回复
      */
     public String getOneShotSyncCreativeResponseByChatMessageList(List<ChatMessage> messageList) {
-        return getResponse(messageList, false, HIGH_TEMPERATURE, HIGH_TOP_P).getChoices().get(0).toString();
+        return getResponse(messageList, false, HIGH_TEMPERATURE, HIGH_TOP_P).getData().getChoices().get(0).toString();
     }
 
     /**
@@ -82,6 +115,17 @@ public class AiManager {
      */
     public String getOneShotSyncStableResponse(String systemMessage, String userMassage) {
         return getOneShotSyncResponse(systemMessage, userMassage, LOW_TEMPERATURE, LOW_TOP_P);
+    }
+
+    /**
+     * 智谱AI一次性异步默认参数请求
+     *
+     * @param systemMessage
+     * @param userMassage
+     * @return 流式一次性的AI回复
+     */
+    public Flowable<ModelData> getOneShotAsyncDefaultResponse(String systemMessage, String userMassage) {
+        return getOneShotAsyncResponse(systemMessage, userMassage, DEFAULT_TEMPERATURE, DEFAULT_TOP_P);
     }
 
     /**
@@ -107,6 +151,20 @@ public class AiManager {
     }
 
     /**
+     * 智谱AI一次性异步请求
+     *
+     * @param systemMessage
+     * @param userMassage
+     * @param temperature
+     * @param topP
+     * @return 流式一次性的AI回复
+     */
+    public Flowable<ModelData> getOneShotAsyncResponse(String systemMessage, String userMassage, Float temperature, Float topP) {
+        return getOneShotResponse(systemMessage, userMassage, true, temperature, topP).getFlowable();
+    }
+
+
+    /**
      * 智谱AI一次性同步请求
      *
      * @param systemMessage
@@ -116,8 +174,9 @@ public class AiManager {
      * @return 一条一次性的AI回复
      */
     public String getOneShotSyncResponse(String systemMessage, String userMassage, Float temperature, Float topP) {
-        return getOneShotResponse(systemMessage, userMassage, false, temperature, topP);
+        return getOneShotResponse(systemMessage, userMassage, false, temperature, topP).getData().getChoices().get(0).toString();
     }
+
 
     /**
      * 智谱AI一次性请求
@@ -129,11 +188,11 @@ public class AiManager {
      * @param topP
      * @return 一条一次性的AI回复
      */
-    public String getOneShotResponse(String systemMessage, String userMassage, Boolean stream, Float temperature, Float topP) {
+    public ModelApiResponse getOneShotResponse(String systemMessage, String userMassage, Boolean stream, Float temperature, Float topP) {
         List<ChatMessage> messages = new ArrayList<>();
         messages.add(new ChatMessage(ChatMessageRole.SYSTEM.value(), systemMessage));
         messages.add(new ChatMessage(ChatMessageRole.USER.value(), userMassage));
-        return getResponse(messages, stream, temperature, topP).getChoices().get(0).toString();
+        return getResponse(messages, stream, temperature, topP);
 
     }
 
@@ -147,7 +206,7 @@ public class AiManager {
      * @param topP
      * @return 聊天模型数据
      */
-    public ModelData getResponse(List<ChatMessage> messages, Boolean stream, Float temperature, Float topP) {
+    public ModelApiResponse getResponse(List<ChatMessage> messages, Boolean stream, Float temperature, Float topP) {
         // 生成ID，注释掉会由服务器生成   String requestId = String.format(requestIdTemplate, System.currentTimeMillis());
         //构建请求
         ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
@@ -165,6 +224,6 @@ public class AiManager {
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "AI调用异常，请联系网站管理员！");
         }
-        return invokeModelApiResp.getData();
+        return invokeModelApiResp;
     }
 }

@@ -16,9 +16,27 @@
             得分：{{ data.resultScore }}
           </a-typography-title>
           <hr style="width: 500px; margin-left: 0; border: 1px solid #d7d7d7" />
-          <a-typography-title :heading="4" class="userAnswer-desc-container">
-            <!--{{ "\xa0\xa0\xa0\xa0\xa0\xa0" }}-->
-            {{ data.resultDesc }}
+          <a-typography-title
+            v-if="data.resultPicture != null"
+            :heading="4"
+            class="userAnswer-desc-container"
+          >
+            {{
+              data.scoringStrategy == APP_SCORING_STRATEGY_ENUM.AI
+                ? "\xa0\xa0\xa0\xa0\xa0\xa0\xa0" + data.resultDesc
+                : data.resultDesc
+            }}
+          </a-typography-title>
+          <a-typography-title
+            v-if="data.resultPicture == null"
+            :heading="4"
+            class="userAnswer-desc-container-no-img"
+          >
+            {{
+              data.scoringStrategy == APP_SCORING_STRATEGY_ENUM.AI
+                ? "\xa0\xa0\xa0\xa0\xa0\xa0\xa0" + data.resultDesc
+                : data.resultDesc
+            }}
           </a-typography-title>
           <a-typography-paragraph class="userAnswer-author-wapper">
             题目发布者：
@@ -86,7 +104,7 @@
             <a-button>分享应用</a-button>
           </a-space>
         </a-col>
-        <a-col flex="400px">
+        <a-col flex="400px" v-if="data.resultPicture != 'null'">
           <a-image
             v-if="data.resultPicture != null"
             width="100%"
@@ -107,6 +125,7 @@ import { useRouter } from "vue-router";
 import ACCESS_ENUM from "@/access/accessEnum";
 import { dayjs } from "@arco-design/web-vue/es/_utils/date";
 import {
+  APP_SCORING_STRATEGY_ENUM,
   APP_SCORING_STRATEGY_MAP,
   APP_TYPE_ENUM,
   APP_TYPE_MAP,
@@ -170,6 +189,11 @@ watchEffect(() => {
 .userAnswer-desc-container {
   width: 90vw;
   max-width: 900px;
+  text-wrap: auto;
+}
+
+.userAnswer-desc-container-no-img {
+  width: 100%;
   text-wrap: auto;
 }
 </style>

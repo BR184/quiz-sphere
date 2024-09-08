@@ -2,10 +2,8 @@ package com.kl.quizsphere.scoring;
 
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.kl.quizsphere.common.ErrorCode;
 import com.kl.quizsphere.constant.ScoringResultIdConstant;
 import com.kl.quizsphere.exception.BusinessException;
-import com.kl.quizsphere.exception.ThrowUtils;
 import com.kl.quizsphere.model.dto.question.QuestionContentDTO;
 import com.kl.quizsphere.model.entity.App;
 import com.kl.quizsphere.model.entity.Question;

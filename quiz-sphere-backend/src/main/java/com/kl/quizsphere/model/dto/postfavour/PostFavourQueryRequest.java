@@ -2,9 +2,10 @@ package com.kl.quizsphere.model.dto.postfavour;
 
 import com.kl.quizsphere.common.PageRequest;
 import com.kl.quizsphere.model.dto.post.PostQueryRequest;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.io.Serializable;
 
 /**
  * 帖子收藏查询请求

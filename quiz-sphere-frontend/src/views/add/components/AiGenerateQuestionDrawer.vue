@@ -48,6 +48,14 @@
             >
               {{ waitingResponse ? "AI生成中..." : "生成题目" }}
             </a-button>
+            <a-button
+              :disabled="waitingResponse"
+              size="large"
+              status="warning"
+              @click="handleSSESubmit"
+            >
+              {{ waitingResponse ? "AI生成中..." : "实时生成" }}
+            </a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -66,6 +74,10 @@ interface Props {
   appId: string;
   // eslint-disable-next-line no-undef
   onSuccess: (result: API.QuestionContentDTO[]) => void;
+  // eslint-disable-next-line no-undef
+  onSSESuccess?: (result: API.QuestionContentDTO) => void;
+  onSSEStart?: (event: any) => void;
+  onSSEClose?: (event: any) => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -80,6 +92,9 @@ const form = reactive({
   // eslint-disable-next-line no-undef
 } as API.QuestionAiGenerateRequest);
 
+/**
+ * 生成题目请求
+ */
 const handleSubmit = async () => {
   if (!props.appId) {
     message.error("请先创建应用！");
@@ -101,6 +116,48 @@ const handleSubmit = async () => {
   } else {
     message.error("生成失败，请重试!,原因:" + res.data.message);
   }
+  waitingResponse.value = false;
+};
+/**
+ * SSE实时生成题目请求
+ */
+const handleSSESubmit = async () => {
+  if (!props.appId) {
+    message.error("请先创建应用！");
+    return;
+  }
+  waitingResponse.value = true;
+  //TODO SSE请求需要手动填写完整的后端地址
+  const eventSource = new EventSource(
+    "http://localhost:8101/api/question/ai/generate_question/flow" +
+      `?appId=${props.appId}` +
+      `&optionNumber=${form.optionNumber}` +
+      `&questionNumber=${form.questionNumber}`
+  );
+  let first = true;
+  //接收消息
+  eventSource.onmessage = function (event) {
+    if (first) {
+      first = false;
+      props.onSSEStart?.(event);
+      handleCancel();
+    }
+    props.onSSESuccess?.(JSON.parse(event.data));
+  };
+  //连接关闭或错误时触发
+  eventSource.onerror = function (event) {
+    if (event.eventPhase === EventSource.CLOSED) {
+      eventSource.close();
+      props.onSSEClose()?.(event);
+    } else {
+      eventSource.close();
+    }
+  };
+  //连接打开时触发
+  // eventSource.onopen = function (event) {
+  //   props.onSSEStart?.(event);
+  //   handleCancel();
+  // };
   waitingResponse.value = false;
 };
 

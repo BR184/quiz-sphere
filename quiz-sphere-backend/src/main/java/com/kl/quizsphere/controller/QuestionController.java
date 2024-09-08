@@ -20,15 +20,19 @@ import com.kl.quizsphere.model.vo.QuestionVO;
 import com.kl.quizsphere.service.AppService;
 import com.kl.quizsphere.service.QuestionService;
 import com.kl.quizsphere.service.UserService;
-import com.zhipu.oapi.ClientV4;
+import com.zhipu.oapi.service.v4.model.ModelData;
+import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 题目接口
@@ -290,6 +294,13 @@ public class QuestionController {
             "4. 返回的题目列表格式必须为 JSON 数组";
 
     // endregion
+
+    /**
+     * AI同步生成题目请求
+     *
+     * @param generateRequest
+     * @return
+     */
     @PostMapping("/ai/generate_question")
     public BaseResponse<List<QuestionContentDTO>> aiGenerateQuestion(@RequestBody QuestionAiGenerateRequest generateRequest) {
         //字段校验
@@ -301,7 +312,6 @@ public class QuestionController {
         ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
         //封装Prompt
         String prompt = getQuestionGenerateMessage(app, generateRequest.getQuestionNumber(), generateRequest.getOptionNumber());
-        System.out.println(prompt);
         //Ai生成
         String result = "";
         if (app.getAppType() == AppTypeEnum.TEST.getValue()) {
@@ -317,6 +327,66 @@ public class QuestionController {
         List<QuestionContentDTO> list = JSONUtil.toList(result, QuestionContentDTO.class);
         System.out.println(JSONUtil.toJsonStr(list));
         return ResultUtils.success(list);
+    }
+
+    /**
+     * AI流式生成题目请求
+     *
+     * @param generateRequest
+     * @return
+     */
+    @GetMapping("/ai/generate_question/flow")
+    public SseEmitter aiFlowableGenerateQuestion(QuestionAiGenerateRequest generateRequest) {
+        //字段校验
+        ThrowUtils.throwIf(generateRequest == null, ErrorCode.PARAMS_ERROR, "参数错误");
+        ThrowUtils.throwIf(generateRequest.getQuestionNumber() > 20 || generateRequest.getQuestionNumber() < 5, ErrorCode.PARAMS_ERROR, "请求题目数量超出范围");
+        ThrowUtils.throwIf(generateRequest.getOptionNumber() < 0 || generateRequest.getOptionNumber() > 6, ErrorCode.PARAMS_ERROR, "请求选项数量超出范围");
+        //数据获取+数据校验
+        App app = appService.getById(generateRequest.getAppId());
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        //封装Prompt
+        String prompt = getQuestionGenerateMessage(app, generateRequest.getQuestionNumber(), generateRequest.getOptionNumber());
+        //建立SSE连接对象
+        SseEmitter sseEmitter = new SseEmitter(0L);
+        //AI流式请求处理返回
+        if (app.getAppType() == AppTypeEnum.TEST.getValue()) {
+            Flowable<ModelData> flowable = aiManager.getOneShotAsyncDefaultResponse(QUESTION_TEST_GENERATE_SYSTEM_PROMPT, prompt);
+            //“{}”计数器{+1 }-1，相等时截取
+            AtomicInteger counter = new AtomicInteger(0);
+            //用于拼接单条题目的JSON
+            StringBuilder questionJSON = new StringBuilder();
+            flowable
+                    .observeOn(Schedulers.io())
+                    .map(modelData -> modelData.getChoices().get(0).getDelta().getContent())
+                    .map(strMsg -> strMsg.replaceAll("\\s|\\n", ""))
+                    .filter(strMsg -> !strMsg.isEmpty())
+                    .concatMap(strMsg -> {
+                        List<Character> charList = new ArrayList<>(strMsg.length());
+                        for (char c : strMsg.toCharArray()) {
+                            charList.add(c);
+                        }
+                        return Flowable.fromIterable(charList);
+                    })
+                    .doOnNext(c -> {
+                        if (c == '{') {
+                            counter.incrementAndGet();
+                        }
+                        if (counter.get() > 0) {
+                            questionJSON.append(c);
+                        }
+                        if (c == '}') {
+                            counter.decrementAndGet();
+                            if (counter.get() == 0) {
+                                sseEmitter.send(JSONUtil.toJsonStr(questionJSON.toString()));
+                                questionJSON.setLength(0);
+                            }
+                        }
+                    })
+                    .doOnError((e) -> log.error("AI流式生成题目请求异常", e))
+                    .doOnComplete(sseEmitter::complete)
+                    .subscribe();
+        }
+        return sseEmitter;
     }
 
 

@@ -20,6 +20,9 @@
             <AiGenerateQuestionDrawer
               :appId="appId"
               :onSuccess="onAiResponseSuccess"
+              :onSSESuccess="onAiSSEResponseSuccess"
+              :onSSEClose="onSSEClose"
+              :onSSEStart="onSSEStart"
             />
             <a-button
               @click="addQuestion(questionContent.length)"
@@ -212,11 +215,7 @@ import {
 } from "@/api/questionController";
 import message from "@arco-design/web-vue/es/message";
 import { getAppVoByIdUsingGet } from "@/api/appController";
-import {
-  APP_SCORING_STRATEGY_ENUM,
-  APP_TYPE_ENUM,
-  APP_TYPE_MAP,
-} from "@/constant/app";
+import { APP_SCORING_STRATEGY_ENUM, APP_TYPE_ENUM } from "@/constant/app";
 import AiGenerateQuestionDrawer from "@/views/add/components/AiGenerateQuestionDrawer.vue";
 
 interface Props {
@@ -387,8 +386,37 @@ const onAiResponseSuccess = (result: API.QuestionContentDTO[]) => {
     });
   }, 700);
 };
-</script>
 
+/**
+ * 当AI流式实时生成题目成功时执行
+ */
+// eslint-disable-next-line no-undef
+const onAiSSEResponseSuccess = (result: API.QuestionContentDTO) => {
+  questionContent.value = [...questionContent.value, result];
+  setTimeout(() => {
+    let divElement = document.getElementById("bottom");
+    divElement.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+      inline: "nearest",
+    });
+  }, 50);
+};
+/**
+ * 当AI生成题目开始时执行
+ * @param event
+ */
+const onSSEStart = (event: any) => {
+  message.info("AI生成题目中，请稍后...");
+};
+/**
+ * 当AI生成题目关闭时执行
+ * @param event
+ */
+const onSSEClose = (event: any) => {
+  message.success("AI生成题目完成！");
+};
+</script>
 <style scoped>
 .question-created-page {
   margin-top: 20px;

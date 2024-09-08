@@ -1,7 +1,5 @@
 package com.kl.quizsphere.model.dto.question;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.io.Serializable;

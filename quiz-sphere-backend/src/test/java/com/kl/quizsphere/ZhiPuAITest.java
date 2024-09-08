@@ -1,7 +1,5 @@
-package com.kl.quizsphere.utils;
+package com.kl.quizsphere;
 
-import com.alibaba.fastjson.JSON;
-import com.kl.quizsphere.config.ZhiPuAIConfig;
 import com.zhipu.oapi.ClientV4;
 import com.zhipu.oapi.Constants;
 import com.zhipu.oapi.service.v4.model.ChatCompletionRequest;
@@ -11,7 +9,6 @@ import com.zhipu.oapi.service.v4.model.ModelApiResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.PropertySource;
 
 import java.util.ArrayList;
 import java.util.List;

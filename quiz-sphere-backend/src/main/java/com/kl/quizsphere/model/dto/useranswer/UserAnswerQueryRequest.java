@@ -1,14 +1,11 @@
 package com.kl.quizsphere.model.dto.useranswer;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.kl.quizsphere.common.PageRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 /**
  * 查询用户答案请求

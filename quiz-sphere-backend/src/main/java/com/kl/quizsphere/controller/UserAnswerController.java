@@ -85,6 +85,8 @@ public class UserAnswerController {
         UserAnswer userAnswerWithResult = null;
         userAnswerWithResult = scoringStrategyExecutor.doScore(userAnswerAddRequest.getChoices(), appService.getById(userAnswerAddRequest.getAppId()));
         userAnswerWithResult.setId(newUserAnswerId);
+        // 避免字段携带appId和分库分表冲突
+        userAnswerWithResult.setAppId(null);
         userAnswerService.updateById(userAnswerWithResult);
         return ResultUtils.success(newUserAnswerId);
     }

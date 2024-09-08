@@ -1,7 +1,7 @@
 package com.kl.quizsphere.mapper;
 
-import com.kl.quizsphere.model.entity.ScoringResult;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.kl.quizsphere.model.entity.ScoringResult;
 
 /**
 * @author <a href="https://github.com/BR184">BR184</a>
