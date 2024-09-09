@@ -16,6 +16,7 @@ import UserRegisterView from "@/views/user/UserRegisterView.vue";
 import DoAnswerView from "@/views/answer/DoAnswerView.vue";
 import MyAnswerView from "@/views/answer/MyAnswerView.vue";
 import AnswerResultView from "@/views/answer/AnswerResultView.vue";
+import AppStatisticPage from "@/views/statistic/AppStatisticPage.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
@@ -136,6 +137,14 @@ export const routes: Array<RouteRecordRaw> = [
     path: "/admin/user_answer",
     name: "回答管理",
     component: AdminUserAnswerPage,
+    meta: {
+      access: ACCESS_ENUM.ADMIN,
+    },
+  },
+  {
+    path: "/static/app_static",
+    name: "应用统计",
+    component: AppStatisticPage,
     meta: {
       access: ACCESS_ENUM.ADMIN,
     },

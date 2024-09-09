@@ -33,7 +33,7 @@ public class UserTestScoringStrategyImpl implements ScoringStrategy {
     private ScoringResultService scoringResultService;
 
     @Override
-    public UserAnswer doScore(List<String> choices, App app) throws BusinessException {
+    public UserAnswer doScore(List<String> choices, App app, Long userAnswerId) throws BusinessException {
         //1.根据id查询题目和题目结果信息
         Long appId = app.getId();
         Question question = questionService.getOne(

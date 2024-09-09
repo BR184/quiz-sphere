@@ -35,8 +35,8 @@ import java.util.stream.Collectors;
 /**
  * 用户答案服务实现
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://www.code-nav.cn">编程导航学习圈</a>
+ * @author <a href="https://github.com/BR184">BR184</a>
+ * @version 1.0
  */
 @Service
 @Slf4j
@@ -66,12 +66,16 @@ public class UserAnswerServiceImpl extends ServiceImpl<UserAnswerMapper, UserAns
         String resultPicture = userAnswer.getResultPicture();
         Integer resultScore = userAnswer.getResultScore();
         Long userId = userAnswer.getUserId();
+        Long id = userAnswer.getId();
 
         // 创建数据时，参数不能为空
         if (add) {
             // 补充校验规则
             ThrowUtils.throwIf(appId==null, ErrorCode.PARAMS_ERROR, "题目所属应用不能为空");
             ThrowUtils.throwIf(StringUtils.isBlank(choices), ErrorCode.PARAMS_ERROR, "题目选项不能为空");
+            // 判断雪花id是否合法
+            ThrowUtils.throwIf(id==null||id<100000000000000000L,ErrorCode.PARAMS_ERROR,"用户答案id错误，请刷新网页！");
+            // 判断雪花id是否篡改
         }
         // 修改数据时，有参数则校验
         // 补充校验规则

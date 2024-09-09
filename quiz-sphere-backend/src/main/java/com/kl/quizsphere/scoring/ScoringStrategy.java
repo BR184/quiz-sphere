@@ -21,5 +21,5 @@ public interface ScoringStrategy {
      * @return
      * @throws BusinessException
      */
-    UserAnswer doScore(List<String> choices, App app) throws BusinessException;
+    UserAnswer doScore(List<String> choices, App app, Long userAnswerId) throws BusinessException;
 }

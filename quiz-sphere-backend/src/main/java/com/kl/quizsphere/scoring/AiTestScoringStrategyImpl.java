@@ -10,6 +10,7 @@ import com.kl.quizsphere.common.ErrorCode;
 import com.kl.quizsphere.exception.BusinessException;
 import com.kl.quizsphere.exception.ThrowUtils;
 import com.kl.quizsphere.manager.AiManager;
+import com.kl.quizsphere.mapper.UserAnswerMapper;
 import com.kl.quizsphere.model.dto.question.QuestionAnswerDTO;
 import com.kl.quizsphere.model.dto.question.QuestionContentDTO;
 import com.kl.quizsphere.model.entity.App;
@@ -17,10 +18,12 @@ import com.kl.quizsphere.model.entity.Question;
 import com.kl.quizsphere.model.entity.UserAnswer;
 import com.kl.quizsphere.model.vo.QuestionVO;
 import com.kl.quizsphere.service.QuestionService;
+import com.kl.quizsphere.service.UserAnswerService;
 import com.zhipu.oapi.service.v4.model.ChatMessage;
 import com.zhipu.oapi.service.v4.model.ChatMessageRole;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -87,6 +90,8 @@ public class AiTestScoringStrategyImpl implements ScoringStrategy {
             "3.描述必须详细，字数控制在200-300字之间，包括我的核心特征、行为偏好、可能的优缺点及其与模型的相关性。\n" +
             "4.结果需唯一，描述需依据评价结果且亲切，叫我您，最后可简短提到其他接近的结果\n" +
             "5.返回格式必须为 JSON 对象：{\"resultName\": \"结果\", \"resultDesc\": \"描述\"}";
+    @Autowired
+    private UserAnswerMapper userAnswerMapper;
     //endregion
 
     /**
@@ -162,7 +167,7 @@ public class AiTestScoringStrategyImpl implements ScoringStrategy {
     }
 
     @Override
-    public UserAnswer doScore(List<String> choices, App app) throws BusinessException {
+    public UserAnswer doScore(List<String> choices, App app, Long userAnswerId) throws BusinessException {
         //0.使用Caffeine缓存
         Long appId = app.getId();
         String jsonStr = JSONUtil.toJsonStr(choices);
@@ -185,7 +190,7 @@ public class AiTestScoringStrategyImpl implements ScoringStrategy {
             //竞争锁
             boolean res = lock.tryLock(3, 15, TimeUnit.SECONDS);
             if (!res) {
-                throw new BusinessException(ErrorCode.OPERATION_ERROR,"服务器繁忙，请于10秒后重试！");
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "服务器繁忙，请于10秒后重试！");
             }
             //1.根据id查询题目和题目结果信息
             Question question = questionService.getOne(
@@ -200,20 +205,29 @@ public class AiTestScoringStrategyImpl implements ScoringStrategy {
             String result = aiManager.getOneShotSyncDefaultResponseByChatMessageList(chatMessages);
 
             //3.解析结果
-            int left = result.indexOf("{");
-            int right = result.lastIndexOf("}");
-            ThrowUtils.throwIf(left == -1 || right == -1, ErrorCode.OPERATION_ERROR, "参数错误匹配错误，请重试！");
-            result = result.substring(left, right + 1);
-
-            //缓存
+            try {
+                int left = result.indexOf("{");
+                int right = result.lastIndexOf("}");
+                ThrowUtils.throwIf(left == -1 || right == -1, ErrorCode.OPERATION_ERROR, "参数错误匹配错误，请重试！");
+                result = result.substring(left, right + 1);
+            } catch (Exception e) {
+                userAnswerMapper.forceDeleteById(userAnswerId);
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "AI生成参数错误，请重试！");
+            }
+            UserAnswer userAnswer;
+            try {
+                //4.构造UserAnswer对象，并返回
+                userAnswer = JSONUtil.toBean(result, UserAnswer.class);
+                userAnswer.setAppId(appId);
+                userAnswer.setAppType(app.getAppType());
+                userAnswer.setScoringStrategy(app.getScoringStrategy());
+                userAnswer.setChoices(jsonStr);
+            } catch (Exception e) {
+                userAnswerMapper.forceDeleteById(userAnswerId);
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "AI生成参数错误，请重试！");
+            }
+            //缓存，一定要等到确定没有错误的时候
             answerCacheMap.put(cacheKey, result);
-
-            //4.构造UserAnswer对象，并返回
-            UserAnswer userAnswer = JSONUtil.toBean(result, UserAnswer.class);
-            userAnswer.setAppId(appId);
-            userAnswer.setAppType(app.getAppType());
-            userAnswer.setScoringStrategy(app.getScoringStrategy());
-            userAnswer.setChoices(jsonStr);
             return userAnswer;
         } catch (InterruptedException e) {
             throw new RuntimeException(e);

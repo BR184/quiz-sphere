@@ -23,7 +23,7 @@ public class ScoringStrategyExecutor{
     private List<ScoringStrategy> scoringStrategyList;
 
 
-    public UserAnswer doScore(List<String> choices, App app) throws BusinessException {
+    public UserAnswer doScore(List<String> choices, App app,Long userAnswerId) throws BusinessException {
         Integer appType = app.getAppType();
         Integer scoringStrategy = app.getScoringStrategy();
         ThrowUtils.throwIf(appType==null||scoringStrategy==null, ErrorCode.PARAMS_ERROR,"应用配置有误，未找到评分策略！");
@@ -31,7 +31,7 @@ public class ScoringStrategyExecutor{
             if(strategy.getClass().isAnnotationPresent(ScoringStrategyConfig.class)){
                 ScoringStrategyConfig strategyConfig = strategy.getClass().getAnnotation(ScoringStrategyConfig.class);
                 if(strategyConfig.appType()==appType&&strategyConfig.scoringStrategy()==scoringStrategy)
-                    return strategy.doScore(choices,app);
+                    return strategy.doScore(choices,app,userAnswerId);
             }
         }
         throw new BusinessException(ErrorCode.PARAMS_ERROR,"应用配置有误，未找到评分策略！");

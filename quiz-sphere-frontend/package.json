@@ -14,12 +14,16 @@
     "@bytemd/vue-next": "^1.21.0",
     "axios": "^1.7.5",
     "core-js": "^3.8.3",
+    "echarts": "^5.5.1",
     "pinia": "^2.2.2",
+    "qrcode": "^1.5.4",
     "vue": "^3.2.13",
+    "vue-echarts": "^7.0.3",
     "vue-router": "^4.0.3"
   },
   "devDependencies": {
     "@arco-design/web-vue": "^2.56.1",
+    "@types/qrcode": "^1.5.5",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "@umijs/openapi": "^1.12.1",

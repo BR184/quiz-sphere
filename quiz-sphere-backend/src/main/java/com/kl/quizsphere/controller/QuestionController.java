@@ -16,12 +16,14 @@ import com.kl.quizsphere.model.entity.App;
 import com.kl.quizsphere.model.entity.Question;
 import com.kl.quizsphere.model.entity.User;
 import com.kl.quizsphere.model.enums.AppTypeEnum;
+import com.kl.quizsphere.model.enums.UserRoleEnum;
 import com.kl.quizsphere.model.vo.QuestionVO;
 import com.kl.quizsphere.service.AppService;
 import com.kl.quizsphere.service.QuestionService;
 import com.kl.quizsphere.service.UserService;
 import com.zhipu.oapi.service.v4.model.ModelData;
 import io.reactivex.Flowable;
+import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -37,8 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 题目接口
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://www.code-nav.cn">编程导航学习圈</a>
+ * @author <a href="https://github.com/BR184">BR184</a>
+ * @version 1.0
  */
 @RestController
 @RequestMapping("/question")
@@ -56,6 +58,9 @@ public class QuestionController {
 
     @Resource
     private AiManager aiManager;
+
+    @Resource
+    private Scheduler vipScheduler;
 
     // region 增删改查
 
@@ -336,7 +341,7 @@ public class QuestionController {
      * @return
      */
     @GetMapping("/ai/generate_question/flow")
-    public SseEmitter aiFlowableGenerateQuestion(QuestionAiGenerateRequest generateRequest) {
+    public SseEmitter aiFlowableGenerateQuestion(QuestionAiGenerateRequest generateRequest,HttpServletRequest request) {
         //字段校验
         ThrowUtils.throwIf(generateRequest == null, ErrorCode.PARAMS_ERROR, "参数错误");
         ThrowUtils.throwIf(generateRequest.getQuestionNumber() > 20 || generateRequest.getQuestionNumber() < 5, ErrorCode.PARAMS_ERROR, "请求题目数量超出范围");
@@ -348,6 +353,14 @@ public class QuestionController {
         String prompt = getQuestionGenerateMessage(app, generateRequest.getQuestionNumber(), generateRequest.getOptionNumber());
         //建立SSE连接对象
         SseEmitter sseEmitter = new SseEmitter(0L);
+        //获取登录用户
+        User user = userService.getLoginUser(request);
+        //默认共享线程池
+        Scheduler scheduler = Schedulers.io();
+        if (user.getUserRole().equals(UserRoleEnum.ADMIN.getValue())||user.getUserRole().equals(UserRoleEnum.VIP.getValue())){
+            scheduler = vipScheduler;
+        }
+
         //AI流式请求处理返回
         if (app.getAppType() == AppTypeEnum.TEST.getValue()) {
             Flowable<ModelData> flowable = aiManager.getOneShotAsyncDefaultResponse(QUESTION_TEST_GENERATE_SYSTEM_PROMPT, prompt);
@@ -356,7 +369,7 @@ public class QuestionController {
             //用于拼接单条题目的JSON
             StringBuilder questionJSON = new StringBuilder();
             flowable
-                    .observeOn(Schedulers.io())
+                    .observeOn(scheduler)
                     .map(modelData -> modelData.getChoices().get(0).getDelta().getContent())
                     .map(strMsg -> strMsg.replaceAll("\\s|\\n", ""))
                     .filter(strMsg -> !strMsg.isEmpty())

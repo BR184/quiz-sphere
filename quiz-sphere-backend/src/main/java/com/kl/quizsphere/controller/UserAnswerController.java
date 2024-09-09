@@ -1,5 +1,9 @@
 package com.kl.quizsphere.controller;
 
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.crypto.SecureUtil;
+import cn.hutool.crypto.digest.HMac;
+import cn.hutool.crypto.digest.HmacAlgorithm;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kl.quizsphere.annotation.AuthCheck;
@@ -18,13 +22,17 @@ import com.kl.quizsphere.model.entity.App;
 import com.kl.quizsphere.model.entity.User;
 import com.kl.quizsphere.model.entity.UserAnswer;
 import com.kl.quizsphere.model.enums.ReviewStatusEnum;
+import com.kl.quizsphere.model.vo.UserAnswerCreatedVo;
 import com.kl.quizsphere.model.vo.UserAnswerVO;
 import com.kl.quizsphere.scoring.ScoringStrategyExecutor;
 import com.kl.quizsphere.service.AppService;
 import com.kl.quizsphere.service.UserAnswerService;
 import com.kl.quizsphere.service.UserService;
+import io.reactivex.Scheduler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -33,8 +41,8 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * 用户答案接口
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://www.code-nav.cn">编程导航学习圈</a>
+ * @author <a href="https://github.com/BR184">BR184</a>
+ * @version 1.0
  */
 @RestController
 @RequestMapping("/userAnswer")
@@ -52,6 +60,9 @@ public class UserAnswerController {
 
     @Resource
     private AppService appService;
+
+    @Value("${security.user-answer-signature-salt}")
+    private String userAnswerSignatureSalt;
 
     // region 增删改查
 
@@ -71,19 +82,29 @@ public class UserAnswerController {
         userAnswer.setChoices(JSONUtil.toJsonStr(userAnswerAddRequest.getChoices()));
         // 数据校验
         userAnswerService.validUserAnswer(userAnswer, true);
+        // 校验id是否篡改,规则：盐+答案id+用户id
+        User loginUser = userService.getLoginUser(request);
+        String key = SecureUtil.sha256(userAnswerSignatureSalt + userAnswerAddRequest.getId() + loginUser.getId());
+        ThrowUtils.throwIf(!key.equals(userAnswerAddRequest.getSignature()), ErrorCode.OPERATION_ERROR, "提交id校验失败，请刷新网页重新答题！");
+        // 校验应用是否通过审核
         App appId = appService.getById(userAnswerAddRequest.getAppId());
         ThrowUtils.throwIf(!appId.getReviewStatus().equals(ReviewStatusEnum.APPROVED.getValue()), ErrorCode.OPERATION_ERROR, "题目所属应用未通过审核");
         // 填充默认值
-        User loginUser = userService.getLoginUser(request);
         userAnswer.setUserId(loginUser.getId());
         // 写入数据库
-        boolean result = userAnswerService.save(userAnswer);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        int i = 1;
+        try {
+            boolean result = userAnswerService.save(userAnswer);
+            ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        } catch (DuplicateKeyException e) {
+            // 用户答案重复发送，忽略
+            throw new BusinessException(ErrorCode.DUPLICATE_ERROR, "请勿重复提交！");
+        }
         // 返回新写入的数据 id
         long newUserAnswerId = userAnswer.getId();
         // 调用评分模块
         UserAnswer userAnswerWithResult = null;
-        userAnswerWithResult = scoringStrategyExecutor.doScore(userAnswerAddRequest.getChoices(), appService.getById(userAnswerAddRequest.getAppId()));
+        userAnswerWithResult = scoringStrategyExecutor.doScore(userAnswerAddRequest.getChoices(), appService.getById(userAnswerAddRequest.getAppId()),userAnswerAddRequest.getId());
         userAnswerWithResult.setId(newUserAnswerId);
         // 避免字段携带appId和分库分表冲突
         userAnswerWithResult.setAppId(null);
@@ -261,4 +282,25 @@ public class UserAnswerController {
     }
 
     // endregion
+
+    /**
+     * 生成用户答案 ID 和 加密数据
+     *
+     * @return
+     */
+    @GetMapping("/generate/id")
+    public BaseResponse<UserAnswerCreatedVo> generateUserAnswerId(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        Long userId = loginUser.getId();
+        ThrowUtils.throwIf(userId == null || userId <= 0, ErrorCode.PARAMS_ERROR);
+        User user = userService.getById(userId);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+        UserAnswerCreatedVo userAnswerCreatedVo = new UserAnswerCreatedVo();
+        long id = IdUtil.getSnowflakeNextId();
+        userAnswerCreatedVo.setId(id);
+        //加密格式：盐+答案雪花id+用户id
+        String key = SecureUtil.sha256(userAnswerSignatureSalt + id + user.getId());
+        userAnswerCreatedVo.setSignature(key);
+        return ResultUtils.success(userAnswerCreatedVo);
+    }
 }

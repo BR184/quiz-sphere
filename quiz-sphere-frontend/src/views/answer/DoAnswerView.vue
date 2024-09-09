@@ -34,10 +34,10 @@
           type="primary"
           v-if="current === questionContent.length"
           circle
-          :disabled="!currentAnswer"
-          :loading="waitingResponse"
           @click="checkAnswer"
           size="large"
+          :disabled="!currentAnswer"
+          :loading="waitingResponse"
           >{{ waitingResponse ? "AI评分中..." : "查看结果" }}
         </a-button>
         <a-button
@@ -65,7 +65,10 @@ import { useRouter } from "vue-router";
 import { listQuestionVoByPageUsingPost } from "@/api/questionController";
 import message from "@arco-design/web-vue/es/message";
 import { getAppVoByIdUsingGet } from "@/api/appController";
-import { addUserAnswerUsingPost } from "@/api/userAnswerController";
+import {
+  addUserAnswerUsingPost,
+  generateUserAnswerIdUsingGet,
+} from "@/api/userAnswerController";
 
 interface Props {
   appId: string;
@@ -102,13 +105,24 @@ const currentAnswer = ref<string>();
 const answerList = reactive<string[]>([]);
 //等待响应
 const waitingResponse = ref(false);
+//唯一ID+提交秘钥
+// eslint-disable-next-line no-undef
+const idInfo = ref<API.UserAnswerCreatedVo>();
+
+const generateId = async () => {
+  const res = await generateUserAnswerIdUsingGet();
+  if (res.data.code === 0) {
+    idInfo.value = res.data.data;
+  } else {
+    message.error("创建ID失败！" + res.data.message);
+  }
+};
 
 const props = withDefaults(defineProps<Props>(), {
   appId: () => {
     return "";
   },
 });
-
 /**
  * 加载数据
  */
@@ -123,7 +137,7 @@ const loadData = async () => {
   if (res.data.code === 0) {
     app.value = res.data.data as any;
   } else {
-    message.error("获取应用失败！" + res.data.msg);
+    message.error("获取应用失败！" + res.data.message);
   }
   //获取题目
   res = await listQuestionVoByPageUsingPost({
@@ -136,10 +150,13 @@ const loadData = async () => {
   if (res.data.code === 0 && res.data.data?.records) {
     questionContent.value = res.data.data?.records[0].questionContent;
   } else {
-    message.error("获取题目失败！" + res.data.msg);
+    message.error("获取题目失败！" + res.data.message);
   }
 };
-
+//进入页面时，生成ID
+watchEffect(() => {
+  generateId();
+});
 //获取旧数据
 watchEffect(() => {
   loadData();
@@ -161,15 +178,25 @@ const checkAnswer = async () => {
   if (!props.appId || !answerList) {
     return;
   }
+  if (!idInfo.value?.id || !idInfo.value?.signature) {
+    message.error("无法获取题目ID，请刷新网页！");
+    return;
+  }
   waitingResponse.value = true;
   const res = await addUserAnswerUsingPost({
+    id: idInfo.value?.id,
+    signature: idInfo.value?.signature,
     appId: props.appId,
     choices: answerList,
   });
   if (res.data.code === 0 && res.data.data) {
     await router.push(`/answer/result/${res.data.data}`);
   } else {
-    message.error("答案提交失败！" + res.data.message);
+    if (res.data.code === 40500) {
+      message.info("答案提交失败" + res.data.message);
+    } else {
+      message.error("答案提交失败！" + res.data.message);
+    }
   }
   waitingResponse.value = false;
 };

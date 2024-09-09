@@ -29,8 +29,8 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * 评分结果接口
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://www.code-nav.cn">编程导航学习圈</a>
+ * @author <a href="https://github.com/BR184">BR184</a>
+ * @version 1.0
  */
 @RestController
 @RequestMapping("/scoringResult")
