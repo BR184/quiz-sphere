@@ -3,7 +3,7 @@
     <a-card class="app-card" hoverable @click="doCardClick">
       <template #actions>
         <span class="icon-hover"> <IconThumbUp /> </span>
-        <span class="icon-hover"> <IconShareInternal /> </span>
+        <span class="icon-hover" @click="doShare"> <IconShareInternal /> </span>
         <span class="icon-hover"> <IconMore /> </span>
       </template>
       <template #cover>
@@ -62,6 +62,11 @@
       </a-card-meta>
     </a-card>
   </a-space>
+  <share-modal
+    :link="sharelink"
+    :title="`分享:${app.appName}`"
+    ref="shareModalRef"
+  />
 </template>
 
 <script setup lang="ts">
@@ -70,8 +75,9 @@ import {
   IconShareInternal,
   IconMore,
 } from "@arco-design/web-vue/es/icon";
-import { defineProps, withDefaults } from "vue";
+import { defineProps, ref, withDefaults } from "vue";
 import { useRouter } from "vue-router";
+import ShareModal from "@/components/ShareModal.vue";
 
 const router = useRouter();
 const doCardClick = () => {
@@ -92,6 +98,18 @@ const props = withDefaults(defineProps<Props>(), {
     };
   },
 });
+//分享模块引用
+const shareModalRef = ref();
+//分享链接
+const sharelink = `${window.location.protocol}//${window.location.host}/app/detail/${props.app.id}`;
+//分享
+const doShare = (e: Event) => {
+  if (shareModalRef.value) {
+    shareModalRef.value.openModal();
+  }
+  //阻止冒泡，防止向上传播点击事件
+  e.stopPropagation();
+};
 </script>
 <style scoped>
 .icon-hover {

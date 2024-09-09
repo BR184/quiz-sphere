@@ -70,7 +70,7 @@
             <a-button type="primary" :href="`/answer/do/${id}`"
               >开始答题
             </a-button>
-            <a-button>分享应用</a-button>
+            <a-button @click="doShare">分享应用</a-button>
             <a-button
               type="dashed"
               status="warning"
@@ -99,6 +99,11 @@
         </a-col>
       </a-row>
     </a-card>
+    <share-modal
+      :link="sharelink"
+      :title="`分享:${data.appName}`"
+      ref="shareModalRef"
+    />
   </div>
 </template>
 
@@ -110,7 +115,8 @@ import { useRouter } from "vue-router";
 import ACCESS_ENUM from "@/access/accessEnum";
 import { dayjs } from "@arco-design/web-vue/es/_utils/date";
 import { useLoginUserStore } from "@/store/userStore";
-import { APP_SCORING_STRATEGY_MAP, APP_TYPE_MAP } from "../../constant/app";
+import { APP_SCORING_STRATEGY_MAP, APP_TYPE_MAP } from "@/constant/app";
+import ShareModal from "@/components/ShareModal.vue";
 
 // eslint-disable-next-line no-undef
 const data = ref<API.AppVO>({});
@@ -162,6 +168,19 @@ const loadData = async () => {
 watchEffect(() => {
   loadData();
 });
+
+//分享模块引用
+const shareModalRef = ref();
+//分享链接
+const sharelink = `${window.location.protocol}//${window.location.host}/app/detail/${props.id}`;
+//分享
+const doShare = (e: Event) => {
+  if (shareModalRef.value) {
+    shareModalRef.value.openModal();
+  }
+  //阻止冒泡，防止向上传播点击事件
+  e.stopPropagation();
+};
 </script>
 
 <style scoped>

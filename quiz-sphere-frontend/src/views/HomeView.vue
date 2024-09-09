@@ -37,6 +37,7 @@ import { ref, watchEffect } from "vue";
 import AppCard from "@/components/AppCard.vue";
 import message from "@arco-design/web-vue/es/message";
 import { listAppVoByPageUsingPost } from "@/api/appController";
+import ShareModal from "@/components/ShareModal.vue";
 
 const initSearchParams = {
   current: 1,
